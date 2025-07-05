@@ -106,3 +106,18 @@ export async function getProjects(): Promise<ProjectInfo[]> {
     return []
   }
 }
+
+export async function startSession(projectPath: string) {
+  try {
+    await execAsync('tmux-composer start-session', {
+      cwd: projectPath,
+    })
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to start session:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
