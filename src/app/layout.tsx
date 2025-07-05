@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ThemeProvider } from '@/lib/theme-provider'
+import { ThemeToggle } from '@/components/theme-toggle'
 import './globals.css'
 import './debug.css'
 
@@ -30,7 +31,12 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <div className='fixed top-4 right-4 z-50'>
+            <ThemeToggle />
+          </div>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )

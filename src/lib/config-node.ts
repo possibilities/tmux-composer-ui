@@ -23,13 +23,13 @@ function expandTilde(filepath: string | undefined): string | undefined {
 
 export const config = {
   worktreesPath: expandTilde(process.env.WORKTREES_PATH),
-  projectPath: expandTilde(process.env.PROJECT_PATH),
+  projectsPath: expandTilde(process.env.PROJECTS_PATH),
 }
 
 export function validateEnvironment() {
   const pathsUsingTilde = [
     process.env.WORKTREES_PATH,
-    process.env.PROJECT_PATH,
+    process.env.PROJECTS_PATH,
   ].some(path => path === '~' || path?.startsWith('~/'))
 
   if (pathsUsingTilde && !process.env.HOME) {
@@ -46,9 +46,9 @@ export function validateConfig() {
       'WORKTREES_PATH environment variable is required. Please set it to the path of your worktrees directory.',
     )
   }
-  if (!config.projectPath) {
+  if (!config.projectsPath) {
     throw new Error(
-      'PROJECT_PATH environment variable is required. Please set it to the path of your project directory.',
+      'PROJECT_PATHS environment variable is required. Please set it to the path of your project directory.',
     )
   }
 }
