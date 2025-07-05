@@ -1,0 +1,5 @@
+@layer base {
+  body[data-debug='true'] * {
+    outline: 1px dashed rgba(255, 0, 0, 0.5);
+  }
+}

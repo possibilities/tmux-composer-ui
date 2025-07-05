@@ -1,0 +1,40 @@
+{
+  "name": "nextjs-template",
+  "version": "0.1.0",
+  "description": "NextJs Template",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "lint": "next lint",
+    "lint:watch": "nodemon --watch src --ext js,mjs,jsx,ts,tsx,json,md,mdx,css,yml,yaml --exec \"next lint\"",
+    "format": "prettier --write \"*.{js,mjs,ts,json,md,mdx,yml,yaml}\" \"src/**/*.{js,mjs,jsx,ts,tsx,json,md,mdx,css,yml,yaml}\""
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.507.0",
+    "next": "15.3.1",
+    "next-themes": "^0.4.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.2.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^4",
+    "tw-animate-css": "^1.2.9",
+    "typescript": "^5"
+  }
+}
