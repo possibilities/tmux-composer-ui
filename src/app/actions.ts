@@ -44,6 +44,23 @@ export async function getProjects(): Promise<ProjectInfo[]> {
     const entries = await fs.readdir(projectsPath, { withFileTypes: true })
     const projects: ProjectInfo[] = []
 
+    try {
+      const { stdout } = await execAsync('tmux-composer show-project --json', {
+        cwd: projectsPath,
+      })
+      const data = JSON.parse(stdout)
+      projects.push({
+        name: data.project.name,
+        path: data.project.path,
+        lastActivity: data.project.lastActivity,
+        git: data.project.git,
+        config: data.config,
+        nextWorktreeNumber: data.project.nextWorktreeNumber,
+      })
+    } catch (error) {
+      console.error(`Failed to get info for PROJECTS_PATH:`, error)
+    }
+
     for (const entry of entries) {
       if (!entry.isDirectory()) continue
 
@@ -79,17 +96,14 @@ export async function getProjects(): Promise<ProjectInfo[]> {
               nextWorktreeNumber: data.project.nextWorktreeNumber,
             })
           } catch (error) {
-            // Skip projects where tmux-composer fails
             console.error(`Failed to get info for ${entry.name}:`, error)
           }
         }
       } catch (error) {
-        // Skip inaccessible directories
         console.error(`Failed to check ${entry.name}:`, error)
       }
     }
 
-    // Sort by lastActivity (most recent first), fallback to name
     return projects.sort((a, b) => {
       if (a.lastActivity && b.lastActivity) {
         return (
