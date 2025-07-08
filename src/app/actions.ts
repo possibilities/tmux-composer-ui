@@ -67,40 +67,31 @@ export async function getProjects(): Promise<ProjectInfo[]> {
       const projectPath = path.join(projectsPath, entry.name)
 
       try {
-        const [hasGit, hasPackageJson] = await Promise.all([
-          fs
-            .access(path.join(projectPath, '.git'))
-            .then(() => true)
-            .catch(() => false),
-          fs
-            .access(path.join(projectPath, 'package.json'))
-            .then(() => true)
-            .catch(() => false),
-        ])
+        const { stdout } = await execAsync(
+          'tmux-composer show-project --json',
+          {
+            cwd: projectPath,
+          },
+        )
+        const data = JSON.parse(stdout)
 
-        if (hasGit && hasPackageJson) {
-          try {
-            const { stdout } = await execAsync(
-              'tmux-composer show-project --json',
-              {
-                cwd: projectPath,
-              },
-            )
-            const data = JSON.parse(stdout)
-            projects.push({
-              name: data.project.name,
-              path: data.project.path,
-              lastActivity: data.project.lastActivity,
-              git: data.project.git,
-              config: data.config,
-              nextWorktreeNumber: data.project.nextWorktreeNumber,
-            })
-          } catch (error) {
-            console.error(`Failed to get info for ${entry.name}:`, error)
-          }
+        const hasGit = data.project.files?.dotGit ?? false
+        const hasPackageJson = data.project.files?.packageJson ?? false
+        const hasTmuxComposerConfig =
+          data.project.files?.tmuxComposerConfig ?? false
+
+        if ((hasGit && hasPackageJson) || hasTmuxComposerConfig) {
+          projects.push({
+            name: data.project.name,
+            path: data.project.path,
+            lastActivity: data.project.lastActivity,
+            git: data.project.git,
+            config: data.config,
+            nextWorktreeNumber: data.project.nextWorktreeNumber,
+          })
         }
       } catch (error) {
-        console.error(`Failed to check ${entry.name}:`, error)
+        console.error(`Failed to get info for ${entry.name}:`, error)
       }
     }
 
