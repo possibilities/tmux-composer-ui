@@ -1,2 +1,2 @@
 commands:
-  run-agent: dirty-confirm && claude-code-inject && context-composer work-on-ui-app | claude --mcp-config .claude/inject-mcps.json
+  run-agent: dirty-confirm && claude-code-inject && claude /work-on-ui-app --mcp-config .claude/inject-mcps.json
