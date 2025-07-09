@@ -45,7 +45,7 @@ export async function getProjects(): Promise<ProjectInfo[]> {
     const projects: ProjectInfo[] = []
 
     try {
-      const { stdout } = await execAsync('tmux-composer show-project --json', {
+      const { stdout } = await execAsync('tmux-composer show-project', {
         cwd: projectsPath,
       })
       const data = JSON.parse(stdout)
@@ -67,12 +67,9 @@ export async function getProjects(): Promise<ProjectInfo[]> {
       const projectPath = path.join(projectsPath, entry.name)
 
       try {
-        const { stdout } = await execAsync(
-          'tmux-composer show-project --json',
-          {
-            cwd: projectPath,
-          },
-        )
+        const { stdout } = await execAsync('tmux-composer show-project', {
+          cwd: projectPath,
+        })
         const data = JSON.parse(stdout)
 
         const hasGit = data.project.files?.dotGit ?? false
