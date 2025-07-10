@@ -20,6 +20,7 @@ export type ProjectInfo = {
   }
   latestCommit?: string
   latestChat?: string
+  isProjectsPath?: boolean
 }
 
 export async function getProjects(): Promise<ProjectInfo[]> {
@@ -38,15 +39,28 @@ export async function getProjects(): Promise<ProjectInfo[]> {
   }
 
   try {
-    const { stdout } = await execAsync('tmux-composer list-projects', {
-      cwd: projectsPath,
-    })
-    const projectsMap: ProjectsMap = JSON.parse(stdout)
+    const [listProjectsResult, showProjectResult] = await Promise.all([
+      execAsync('tmux-composer list-projects', {
+        cwd: projectsPath,
+      }),
+      execAsync(`tmux-composer show-project "${projectsPath}"`),
+    ])
+
+    const projectsMap: ProjectsMap = JSON.parse(listProjectsResult.stdout)
+
+    const projectsPathData: ProjectWithConfig = JSON.parse(
+      showProjectResult.stdout,
+    )
+    if (projectsPathData.project) {
+      projectsPathData.project.path = projectsPath
+      projectsMap[projectsPath] = projectsPathData
+    }
 
     const projects = Object.values(projectsMap)
       .map(({ project }) => project)
       .filter(
         project =>
+          project.isProjectsPath ||
           (project.files?.dotGit && project.files?.packageJson) ||
           project.files?.tmuxComposerConfig,
       )
