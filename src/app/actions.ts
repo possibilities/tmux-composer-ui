@@ -105,8 +105,6 @@ export async function switchToSession(sessionName: string) {
 export async function finishSession(sessionName: string) {
   try {
     await execAsync(`tmux-composer finish-session "${sessionName}"`)
-    const { revalidatePath } = await import('next/cache')
-    revalidatePath('/')
     return { success: true }
   } catch (error) {
     console.error('Failed to finish session:', error)
