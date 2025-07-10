@@ -2,6 +2,7 @@ import { ProjectInfo } from '@/app/actions'
 import { timeSince } from '@/lib/time'
 import { Card, CardHeader, CardTitle, CardAction } from '@/components/ui/card'
 import { PlayButton } from '@/components/play-button'
+import { SessionButton } from '@/components/session-button'
 
 export function ProjectCard({ project }: { project: ProjectInfo }) {
   const lastActivity = project.latestChat || project.latestCommit
@@ -20,12 +21,9 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
         {project.activeSessions && project.activeSessions.length > 0 && (
           <div className='mt-2 flex flex-wrap gap-1.5'>
             {project.activeSessions.map((session, index) => (
-              <div
-                key={session.name}
-                className='inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground'
-              >
+              <SessionButton key={session.name} sessionName={session.name}>
                 Session {index + 1}
-              </div>
+              </SessionButton>
             ))}
           </div>
         )}

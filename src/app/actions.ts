@@ -87,3 +87,16 @@ export async function startSession(projectPath: string) {
     }
   }
 }
+
+export async function switchToSession(sessionName: string) {
+  try {
+    await execAsync(`tmux switch-client -t "${sessionName}"`)
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to switch session:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
