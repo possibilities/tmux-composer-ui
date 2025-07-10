@@ -1,7 +1,5 @@
 'use server'
 
-import { promises as fs } from 'fs'
-import path from 'path'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 
@@ -10,28 +8,18 @@ const execAsync = promisify(exec)
 export type ProjectInfo = {
   name: string
   path: string
-  lastActivity?: string
   git?: {
     branch: string
     commit: string
-    status: string
+    status: 'clean' | 'dirty'
   }
-  config?: {
-    worktree?: {
-      value: boolean
-      source: string
-      sourcePath: string
-    }
-    commands?: Record<
-      string,
-      {
-        value: string
-        source: string
-        sourcePath: string
-      }
-    >
+  files?: {
+    dotGit: boolean
+    packageJson: boolean
+    tmuxComposerConfig: boolean
   }
-  nextWorktreeNumber?: string
+  latestCommit?: string
+  latestChat?: string
 }
 
 export async function getProjects(): Promise<ProjectInfo[]> {
@@ -40,71 +28,40 @@ export async function getProjects(): Promise<ProjectInfo[]> {
     return []
   }
 
+  type ProjectWithConfig = {
+    project: ProjectInfo
+    config: Record<string, unknown>
+  }
+
+  type ProjectsMap = {
+    [key: string]: ProjectWithConfig
+  }
+
   try {
-    const entries = await fs.readdir(projectsPath, { withFileTypes: true })
-    const projects: ProjectInfo[] = []
+    const { stdout } = await execAsync('tmux-composer list-projects', {
+      cwd: projectsPath,
+    })
+    const projectsMap: ProjectsMap = JSON.parse(stdout)
 
-    try {
-      const { stdout } = await execAsync('tmux-composer show-project', {
-        cwd: projectsPath,
-      })
-      const data = JSON.parse(stdout)
-      projects.push({
-        name: data.project.name,
-        path: data.project.path,
-        lastActivity: data.project.lastActivity,
-        git: data.project.git,
-        config: data.config,
-        nextWorktreeNumber: data.project.nextWorktreeNumber,
-      })
-    } catch (error) {
-      console.error(`Failed to get info for PROJECTS_PATH:`, error)
-    }
-
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue
-
-      const projectPath = path.join(projectsPath, entry.name)
-
-      try {
-        const { stdout } = await execAsync('tmux-composer show-project', {
-          cwd: projectPath,
-        })
-        const data = JSON.parse(stdout)
-
-        const hasGit = data.project.files?.dotGit ?? false
-        const hasPackageJson = data.project.files?.packageJson ?? false
-        const hasTmuxComposerConfig =
-          data.project.files?.tmuxComposerConfig ?? false
-
-        if ((hasGit && hasPackageJson) || hasTmuxComposerConfig) {
-          projects.push({
-            name: data.project.name,
-            path: data.project.path,
-            lastActivity: data.project.lastActivity,
-            git: data.project.git,
-            config: data.config,
-            nextWorktreeNumber: data.project.nextWorktreeNumber,
-          })
-        }
-      } catch (error) {
-        console.error(`Failed to get info for ${entry.name}:`, error)
-      }
-    }
+    const projects = Object.values(projectsMap)
+      .map(({ project }) => project)
+      .filter(
+        project =>
+          (project.files?.dotGit && project.files?.packageJson) ||
+          project.files?.tmuxComposerConfig,
+      )
 
     return projects.sort((a, b) => {
-      if (a.lastActivity && b.lastActivity) {
-        return (
-          new Date(b.lastActivity).getTime() -
-          new Date(a.lastActivity).getTime()
-        )
-      }
-      if (a.lastActivity && !b.lastActivity) return -1
-      if (!a.lastActivity && b.lastActivity) return 1
-      return a.name.localeCompare(b.name)
+      const aTime = a.latestChat || a.latestCommit
+      const bTime = b.latestChat || b.latestCommit
+
+      if (!aTime && !bTime) return a.name.localeCompare(b.name)
+      if (!aTime) return 1
+      if (!bTime) return -1
+      return new Date(bTime).getTime() - new Date(aTime).getTime()
     })
   } catch (error) {
-    console.error('Failed to read projects directory:', error)
+    console.error(`Failed to list projects in ${projectsPath}:`, error)
     return []
   }
 }
