@@ -14,9 +14,11 @@ export function OpenSessionButton({
   sessions,
   newestSessionName,
 }: {
-  sessions: NonNullable<ProjectInfo['activeSessions']>
-  newestSessionName: string
+  sessions?: NonNullable<ProjectInfo['activeSessions']>
+  newestSessionName?: string
 }) {
+  const hasNoSessions = !sessions || sessions.length === 0 || !newestSessionName
+
   const handleSwitchSession = async (sessionName: string) => {
     const result = await switchToSession(sessionName)
     if (!result.success) {
@@ -30,7 +32,10 @@ export function OpenSessionButton({
         size='icon'
         variant='outline'
         className='rounded-r-none'
-        onClick={() => handleSwitchSession(newestSessionName)}
+        disabled={hasNoSessions}
+        onClick={() =>
+          newestSessionName && handleSwitchSession(newestSessionName)
+        }
       >
         <Monitor className='size-4' />
       </Button>
@@ -40,25 +45,30 @@ export function OpenSessionButton({
             size='icon'
             variant='outline'
             className='rounded-l-none border-l-0 px-1'
+            disabled={hasNoSessions}
           >
             <ChevronDown className='size-3' />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end'>
-          {sessions?.map((session, index) => (
-            <DropdownMenuItem
-              key={session.name}
-              onClick={() => handleSwitchSession(session.name)}
-            >
-              <Monitor className='mr-2 size-4' />
-              Session {index + 1}
-              {session.name === newestSessionName && (
-                <span className='ml-auto text-xs text-muted-foreground'>
-                  newest
-                </span>
-              )}
-            </DropdownMenuItem>
-          ))}
+          {sessions && sessions.length > 0 ? (
+            sessions.map((session, index) => (
+              <DropdownMenuItem
+                key={session.name}
+                onClick={() => handleSwitchSession(session.name)}
+              >
+                <Monitor className='mr-2 size-4' />
+                Session {index + 1}
+                {session.name === newestSessionName && (
+                  <span className='ml-auto text-xs text-muted-foreground'>
+                    newest
+                  </span>
+                )}
+              </DropdownMenuItem>
+            ))
+          ) : (
+            <DropdownMenuItem disabled>No active sessions</DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
