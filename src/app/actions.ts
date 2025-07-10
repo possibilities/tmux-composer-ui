@@ -24,6 +24,7 @@ export type ProjectInfo = {
   activeSessions?: Array<{
     name: string
     mode: string
+    startTime?: string
   }>
 }
 
