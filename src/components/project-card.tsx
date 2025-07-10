@@ -17,6 +17,18 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
             </span>
           )}
         </CardTitle>
+        {project.activeSessions && project.activeSessions.length > 0 && (
+          <div className='mt-2 flex flex-wrap gap-1.5'>
+            {project.activeSessions.map((session, index) => (
+              <div
+                key={session.name}
+                className='inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground'
+              >
+                Session {index + 1}
+              </div>
+            ))}
+          </div>
+        )}
         <CardAction>
           <PlayButton projectPath={project.path} />
         </CardAction>

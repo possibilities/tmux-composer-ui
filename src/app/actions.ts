@@ -21,6 +21,10 @@ export type ProjectInfo = {
   latestCommit?: string
   latestChat?: string
   isProjectsPath?: boolean
+  activeSessions?: Array<{
+    name: string
+    mode: string
+  }>
 }
 
 export async function getProjects(): Promise<ProjectInfo[]> {
