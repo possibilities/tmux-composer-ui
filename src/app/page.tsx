@@ -5,7 +5,7 @@ export default async function Home() {
   const projects = await getProjects()
 
   return (
-    <main className='mx-auto max-w-4xl p-6'>
+    <main className='mx-auto max-w-2xl p-6'>
       {projects.length === 0 ? (
         <div className='rounded-lg border border-dashed p-8 text-center'>
           <p className='text-muted-foreground'>

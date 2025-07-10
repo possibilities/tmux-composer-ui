@@ -23,20 +23,22 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
   return (
     <Card className='transition-all hover:shadow-md'>
       <CardHeader>
-        <CardTitle className='flex items-center gap-2'>
-          <div
-            className={`size-2 rounded-full transition-colors ${
-              hasActiveSessions
-                ? 'bg-yellow-400 shadow-[0_0_3px_rgba(250,204,21,0.4)]'
-                : 'bg-zinc-700 dark:bg-zinc-600'
-            }`}
-            aria-label={
-              hasActiveSessions ? 'Sessions active' : 'No active sessions'
-            }
-          />
-          {project.name}
+        <CardTitle className='flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2'>
+          <div className='flex items-center gap-2 min-w-0'>
+            <div
+              className={`size-2 shrink-0 rounded-full transition-colors ${
+                hasActiveSessions
+                  ? 'bg-yellow-400 shadow-[0_0_3px_rgba(250,204,21,0.4)]'
+                  : 'bg-zinc-700 dark:bg-zinc-600'
+              }`}
+              aria-label={
+                hasActiveSessions ? 'Sessions active' : 'No active sessions'
+              }
+            />
+            <span className='truncate'>{project.name}</span>
+          </div>
           {lastActivity && (
-            <span className='text-sm font-normal text-muted-foreground/60'>
+            <span className='text-sm font-normal text-muted-foreground/60 sm:shrink-0'>
               {timeSince(lastActivity)}
             </span>
           )}
