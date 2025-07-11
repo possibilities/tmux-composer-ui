@@ -24,6 +24,7 @@ function expandTilde(filepath: string | undefined): string | undefined {
 export const config = {
   worktreesPath: expandTilde(process.env.WORKTREES_PATH),
   projectsPath: expandTilde(process.env.PROJECTS_PATH),
+  tmuxServer: process.env.TMUX_SERVER || 'default',
 }
 
 export function validateEnvironment() {

@@ -2,6 +2,7 @@
 
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import { config } from '@/lib/config-node'
 
 const execAsync = promisify(exec)
 
@@ -44,9 +45,12 @@ export async function getProjects(): Promise<ProjectInfo[]> {
   }
 
   try {
-    const listProjectsResult = await execAsync('tmux-composer list-projects', {
-      cwd: projectsPath,
-    })
+    const listProjectsResult = await execAsync(
+      `tmux-composer list-projects --tmux-socket ${config.tmuxServer}`,
+      {
+        cwd: projectsPath,
+      },
+    )
 
     const projectsMap: ProjectsMap = JSON.parse(listProjectsResult.stdout)
 
@@ -76,9 +80,12 @@ export async function getProjects(): Promise<ProjectInfo[]> {
 
 export async function startSession(projectPath: string) {
   try {
-    await execAsync('tmux-composer start-session', {
-      cwd: projectPath,
-    })
+    await execAsync(
+      `tmux-composer start-session --tmux-socket ${config.tmuxServer}`,
+      {
+        cwd: projectPath,
+      },
+    )
     return { success: true }
   } catch (error) {
     console.error('Failed to start session:', error)
@@ -91,7 +98,9 @@ export async function startSession(projectPath: string) {
 
 export async function switchToSession(sessionName: string) {
   try {
-    await execAsync(`tmux switch-client -t "${sessionName}"`)
+    await execAsync(
+      `tmux -L ${config.tmuxServer} switch-client -t "${sessionName}"`,
+    )
     return { success: true }
   } catch (error) {
     console.error('Failed to switch session:', error)
@@ -104,7 +113,9 @@ export async function switchToSession(sessionName: string) {
 
 export async function finishSession(sessionName: string) {
   try {
-    await execAsync(`tmux-composer finish-session "${sessionName}"`)
+    await execAsync(
+      `tmux-composer finish-session --tmux-socket ${config.tmuxServer} "${sessionName}"`,
+    )
     return { success: true }
   } catch (error) {
     console.error('Failed to finish session:', error)
