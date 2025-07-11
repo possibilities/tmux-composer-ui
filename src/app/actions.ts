@@ -45,9 +45,12 @@ export async function getProjects(): Promise<ProjectInfo[]> {
   }
 
   try {
-    const listProjectsResult = await execAsync(`tmux-composer list-projects`, {
-      cwd: projectsPath,
-    })
+    const listProjectsResult = await execAsync(
+      `tmux-composer list-projects --tmux-socket ${config.tmuxServer}`,
+      {
+        cwd: projectsPath,
+      },
+    )
 
     const projectsMap: ProjectsMap = JSON.parse(listProjectsResult.stdout)
 
