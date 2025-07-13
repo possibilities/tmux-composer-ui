@@ -10,11 +10,8 @@ interface WebSocketMessage {
   data: string
 }
 
-interface WebSocketClientProps {
-  url: string
-}
-
-export function WebSocketClient({ url }: WebSocketClientProps) {
+export function WebSocketClient() {
+  const url = process.env.NEXT_PUBLIC_WEBSOCKET_URL
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [messages, setMessages] = useState<WebSocketMessage[]>([])
@@ -32,6 +29,10 @@ export function WebSocketClient({ url }: WebSocketClientProps) {
   }, [messages])
 
   const connect = useCallback(() => {
+    if (!url) {
+      return
+    }
+
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return
     }
@@ -102,12 +103,25 @@ export function WebSocketClient({ url }: WebSocketClientProps) {
   }, [])
 
   useEffect(() => {
-    connect()
+    if (url) {
+      connect()
+    }
 
     return () => {
       disconnect()
     }
-  }, [connect, disconnect])
+  }, [url, connect, disconnect])
+
+  if (!url) {
+    return (
+      <div className='rounded-lg border border-dashed p-8 text-center'>
+        <p className='text-muted-foreground'>
+          No WebSocket URL configured. Please set NEXT_PUBLIC_WEBSOCKET_URL
+          environment variable.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className='space-y-4'>
