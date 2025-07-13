@@ -25,6 +25,7 @@ export const config = {
   worktreesPath: expandTilde(process.env.WORKTREES_PATH),
   projectsPath: expandTilde(process.env.PROJECTS_PATH),
   tmuxServer: process.env.TMUX_SERVER || 'default',
+  websocketUrl: process.env.WEBSOCKET_URL,
 }
 
 export function validateEnvironment() {
@@ -51,5 +52,20 @@ export function validateConfig() {
     throw new Error(
       'PROJECT_PATHS environment variable is required. Please set it to the path of your project directory.',
     )
+  }
+  if (config.websocketUrl) {
+    try {
+      new URL(config.websocketUrl)
+      if (
+        !config.websocketUrl.startsWith('ws://') &&
+        !config.websocketUrl.startsWith('wss://')
+      ) {
+        throw new Error('WebSocket URL must use ws:// or wss:// protocol')
+      }
+    } catch (error) {
+      throw new Error(
+        `Invalid WEBSOCKET_URL: ${error instanceof Error ? error.message : 'Invalid URL format'}`,
+      )
+    }
   }
 }
