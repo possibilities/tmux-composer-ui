@@ -18,8 +18,8 @@ interface CollapsibleMessageProps {
 }
 
 function extractMessageType(data: unknown): string | undefined {
-  if (typeof data === 'object' && data !== null && 'type' in data) {
-    const possibleType = (data as Record<string, unknown>).type
+  if (typeof data === 'object' && data !== null && 'event' in data) {
+    const possibleType = (data as Record<string, unknown>).event
     return typeof possibleType === 'string' ? possibleType : undefined
   }
   return undefined
