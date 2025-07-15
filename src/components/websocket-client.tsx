@@ -273,7 +273,7 @@ export function WebSocketClient() {
 
       <Card className='p-4'>
         <h2 className='mb-3 font-semibold'>Messages</h2>
-        <div className='max-h-[500px] overflow-y-auto'>
+        <div className='h-[calc(100vh-20rem)] overflow-y-auto'>
           {messages.length === 0 ? (
             <p className='text-center text-muted-foreground'>
               No messages received yet
