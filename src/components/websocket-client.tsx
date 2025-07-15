@@ -25,11 +25,33 @@ function extractMessageType(data: unknown): string | undefined {
   return undefined
 }
 
+function extractSourceScript(data: unknown): string | undefined {
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'source' in data &&
+    typeof (data as Record<string, unknown>).source === 'object' &&
+    (data as Record<string, unknown>).source !== null
+  ) {
+    const source = (data as Record<string, unknown>).source as Record<
+      string,
+      unknown
+    >
+    if ('script' in source && typeof source.script === 'string') {
+      return source.script
+    }
+  }
+  return undefined
+}
+
 function CollapsibleMessage({ message }: CollapsibleMessageProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const isJsonMessage = message.parsedData !== undefined
   const displayType = message.type || 'Unknown'
+  const sourceScript = message.parsedData
+    ? extractSourceScript(message.parsedData)
+    : undefined
 
   return (
     <div className='rounded-md bg-muted/50 p-3 font-mono text-sm'>
@@ -50,6 +72,11 @@ function CollapsibleMessage({ message }: CollapsibleMessageProps) {
               <ChevronRight size={14} />
             )}
             <span className='font-semibold'>{displayType}</span>
+            {sourceScript && (
+              <span className='ml-2 text-muted-foreground'>
+                - {sourceScript}
+              </span>
+            )}
           </button>
 
           {isExpanded && (
