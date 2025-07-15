@@ -3,11 +3,66 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { ChevronRight, ChevronDown } from 'lucide-react'
 
 interface WebSocketMessage {
   id: string
   timestamp: string
   data: string
+  parsedData?: Record<string, unknown>
+  type?: string
+}
+
+interface CollapsibleMessageProps {
+  message: WebSocketMessage
+}
+
+function extractMessageType(data: unknown): string | undefined {
+  if (typeof data === 'object' && data !== null && 'type' in data) {
+    const possibleType = (data as Record<string, unknown>).type
+    return typeof possibleType === 'string' ? possibleType : undefined
+  }
+  return undefined
+}
+
+function CollapsibleMessage({ message }: CollapsibleMessageProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  const isJsonMessage = message.parsedData !== undefined
+  const displayType = message.type || 'Unknown'
+
+  return (
+    <div className='rounded-md bg-muted/50 p-3 font-mono text-sm'>
+      <div className='mb-1 flex items-center justify-between text-xs text-muted-foreground'>
+        <span>{message.timestamp}</span>
+      </div>
+
+      {isJsonMessage ? (
+        <div>
+          <button
+            type='button'
+            onClick={() => setIsExpanded(!isExpanded)}
+            className='flex items-center gap-1 hover:opacity-70 focus:opacity-70 transition-opacity focus:outline-none cursor-pointer'
+          >
+            {isExpanded ? (
+              <ChevronDown size={14} />
+            ) : (
+              <ChevronRight size={14} />
+            )}
+            <span className='font-semibold'>{displayType}</span>
+          </button>
+
+          {isExpanded && (
+            <pre className='mt-2 whitespace-pre-wrap break-all text-xs'>
+              {JSON.stringify(message.parsedData, null, 2)}
+            </pre>
+          )}
+        </div>
+      ) : (
+        <pre className='whitespace-pre-wrap break-all'>{message.data}</pre>
+      )}
+    </div>
+  )
 }
 
 export function WebSocketClient() {
@@ -52,10 +107,23 @@ export function WebSocketClient() {
       }
 
       ws.onmessage = event => {
+        let parsedData: Record<string, unknown> | undefined
+        let messageType: string | undefined
+
+        try {
+          parsedData = JSON.parse(event.data)
+          messageType = extractMessageType(parsedData)
+        } catch {
+          parsedData = undefined
+          messageType = undefined
+        }
+
         const newMessage: WebSocketMessage = {
           id: Date.now().toString(),
           timestamp: new Date().toLocaleTimeString(),
           data: event.data,
+          parsedData,
+          type: messageType,
         }
         setMessages(prev => [...prev, newMessage])
       }
@@ -186,17 +254,7 @@ export function WebSocketClient() {
           ) : (
             <div className='space-y-2'>
               {messages.map(message => (
-                <div
-                  key={message.id}
-                  className='rounded-md bg-muted/50 p-3 font-mono text-sm'
-                >
-                  <div className='mb-1 text-xs text-muted-foreground'>
-                    {message.timestamp}
-                  </div>
-                  <pre className='whitespace-pre-wrap break-all'>
-                    {message.data}
-                  </pre>
-                </div>
+                <CollapsibleMessage key={message.id} message={message} />
               ))}
               <div ref={messagesEndRef} />
             </div>
