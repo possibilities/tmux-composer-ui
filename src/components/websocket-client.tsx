@@ -254,7 +254,10 @@ export function WebSocketClient() {
           ) : (
             <div className='space-y-2'>
               {messages.map(message => (
-                <CollapsibleMessage key={message.id} message={message} />
+                <CollapsibleMessage
+                  key={`${message.id}-${message.type || 'unknown'}`}
+                  message={message}
+                />
               ))}
               <div ref={messagesEndRef} />
             </div>
