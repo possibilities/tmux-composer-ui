@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ChevronRight, ChevronDown } from 'lucide-react'
+import { useWebSocketSubscription } from '@/lib/use-websocket-subscription'
 
 interface WebSocketMessage {
   id: string
@@ -94,13 +95,28 @@ function CollapsibleMessage({ message }: CollapsibleMessageProps) {
 
 export function WebSocketClient() {
   const url = process.env.NEXT_PUBLIC_WEBSOCKET_URL
-  const [isConnected, setIsConnected] = useState(false)
-  const [isConnecting, setIsConnecting] = useState(false)
   const [messages, setMessages] = useState<WebSocketMessage[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const wsRef = useRef<WebSocket | null>(null)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const { isConnected, isConnecting, error } = useWebSocketSubscription(
+    '*',
+    data => {
+      let messageType: string | undefined
+
+      if (typeof data === 'object' && data !== null) {
+        messageType = extractMessageType(data)
+      }
+
+      const newMessage: WebSocketMessage = {
+        id: Date.now().toString(),
+        timestamp: new Date().toLocaleTimeString(),
+        data: JSON.stringify(data),
+        parsedData: data as Record<string, unknown>,
+        type: messageType,
+      }
+      setMessages(prev => [...prev, newMessage])
+    },
+  )
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -110,102 +126,9 @@ export function WebSocketClient() {
     scrollToBottom()
   }, [messages])
 
-  const connect = useCallback(() => {
-    if (!url) {
-      return
-    }
-
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      return
-    }
-
-    setIsConnecting(true)
-    setError(null)
-
-    try {
-      const ws = new WebSocket(url)
-      wsRef.current = ws
-
-      ws.onopen = () => {
-        setIsConnected(true)
-        setIsConnecting(false)
-        setError(null)
-        console.log('WebSocket connected')
-      }
-
-      ws.onmessage = event => {
-        let parsedData: Record<string, unknown> | undefined
-        let messageType: string | undefined
-
-        try {
-          parsedData = JSON.parse(event.data)
-          messageType = extractMessageType(parsedData)
-        } catch {
-          parsedData = undefined
-          messageType = undefined
-        }
-
-        const newMessage: WebSocketMessage = {
-          id: Date.now().toString(),
-          timestamp: new Date().toLocaleTimeString(),
-          data: event.data,
-          parsedData,
-          type: messageType,
-        }
-        setMessages(prev => [...prev, newMessage])
-      }
-
-      ws.onerror = event => {
-        console.error('WebSocket error:', event)
-        setError('WebSocket connection error')
-      }
-
-      ws.onclose = event => {
-        setIsConnected(false)
-        setIsConnecting(false)
-        wsRef.current = null
-
-        if (!event.wasClean) {
-          setError(`Connection lost: ${event.reason || 'Unknown error'}`)
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect()
-          }, 3000)
-        }
-      }
-    } catch (err) {
-      setIsConnecting(false)
-      setError(err instanceof Error ? err.message : 'Failed to connect')
-    }
-  }, [url])
-
-  const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
-    }
-
-    if (wsRef.current) {
-      wsRef.current.close(1000, 'User disconnected')
-      wsRef.current = null
-    }
-
-    setIsConnected(false)
-    setIsConnecting(false)
-  }, [])
-
-  const clearMessages = useCallback(() => {
+  const clearMessages = () => {
     setMessages([])
-  }, [])
-
-  useEffect(() => {
-    if (url) {
-      connect()
-    }
-
-    return () => {
-      disconnect()
-    }
-  }, [url, connect, disconnect])
+  }
 
   if (!url) {
     return (
@@ -241,16 +164,6 @@ export function WebSocketClient() {
             </span>
           </div>
           <div className='flex gap-2'>
-            {!isConnected && !isConnecting && (
-              <Button onClick={connect} size='sm'>
-                Connect
-              </Button>
-            )}
-            {(isConnected || isConnecting) && (
-              <Button onClick={disconnect} size='sm' variant='outline'>
-                Disconnect
-              </Button>
-            )}
             <Button
               onClick={clearMessages}
               size='sm'

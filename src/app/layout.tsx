@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ThemeProvider } from '@/lib/theme-provider'
+import { WebSocketProvider } from '@/lib/websocket-provider'
 import { ThemeToggle } from '@/components/theme-toggle'
 import './globals.css'
 import './debug.css'
@@ -32,10 +33,12 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider>
-          <div className='fixed top-4 right-4 z-50'>
-            <ThemeToggle />
-          </div>
-          {children}
+          <WebSocketProvider>
+            <div className='fixed top-4 right-4 z-50'>
+              <ThemeToggle />
+            </div>
+            {children}
+          </WebSocketProvider>
         </ThemeProvider>
       </body>
     </html>

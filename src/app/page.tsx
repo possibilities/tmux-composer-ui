@@ -1,5 +1,5 @@
 import { getProjects } from './actions'
-import { ProjectCard } from '@/components/project-card'
+import { ProjectCardWrapper } from '@/components/project-card-wrapper'
 
 export default async function Home() {
   const projects = await getProjects()
@@ -15,7 +15,7 @@ export default async function Home() {
       ) : (
         <div className='grid gap-4'>
           {projects.map(project => (
-            <ProjectCard key={project.path} project={project} />
+            <ProjectCardWrapper key={project.path} project={project} />
           ))}
         </div>
       )}
