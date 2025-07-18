@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { ProjectInfo } from '@/app/actions'
 import { timeSince } from '@/lib/time'
 import { Card, CardHeader, CardTitle, CardAction } from '@/components/ui/card'
@@ -8,19 +8,27 @@ import { PlayButton } from '@/components/play-button'
 import { OpenSessionButton } from '@/components/open-session-button'
 import { useWebSocketSubscription } from '@/lib/use-websocket-subscription'
 
+interface SessionData {
+  name: string
+  mode: string
+  startTime?: string
+}
+
 interface SessionEvent {
   event: string
   projectPath?: string
+  session?: SessionData
+  sessionName?: string
   [key: string]: unknown
 }
 
 export function ProjectCard({ project }: { project: ProjectInfo }) {
-  const [isSessionActive, setIsSessionActive] = useState(false)
-  const lastActivity = project.latestChat || project.latestCommit
+  const [localProject, setLocalProject] = useState(project)
+  const lastActivity = localProject.latestChat || localProject.latestCommit
   const hasActiveSessions =
-    project.activeSessions && project.activeSessions.length > 0
+    localProject.activeSessions && localProject.activeSessions.length > 0
 
-  const newestSession = project.activeSessions?.reduce(
+  const newestSession = localProject.activeSessions?.reduce(
     (newest, session) => {
       if (!newest) return session
       if (!session.startTime || !newest.startTime) return newest
@@ -28,18 +36,27 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
         ? session
         : newest
     },
-    null as (typeof project.activeSessions)[0] | null,
+    null as (typeof localProject.activeSessions)[0] | null,
   )
 
   const handleKillSession = (data: SessionEvent) => {
-    if (data.projectPath === project.path) {
-      setIsSessionActive(false)
+    if (data.projectPath === project.path && data.sessionName) {
+      setLocalProject(prev => ({
+        ...prev,
+        activeSessions:
+          prev.activeSessions?.filter(
+            session => session.name !== data.sessionName,
+          ) || [],
+      }))
     }
   }
 
   const handleCreateSession = (data: SessionEvent) => {
-    if (data.projectPath === project.path) {
-      setIsSessionActive(true)
+    if (data.projectPath === project.path && data.session) {
+      setLocalProject(prev => ({
+        ...prev,
+        activeSessions: [...(prev.activeSessions || []), data.session!],
+      }))
     }
   }
 
@@ -52,10 +69,6 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
     handleCreateSession,
   )
 
-  useEffect(() => {
-    setIsSessionActive(hasActiveSessions || false)
-  }, [hasActiveSessions])
-
   return (
     <Card className='transition-all hover:shadow-md'>
       <CardHeader>
@@ -63,15 +76,15 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
           <div className='flex items-center gap-2 min-w-0'>
             <div
               className={`size-2 shrink-0 rounded-full transition-colors ${
-                isSessionActive
+                hasActiveSessions
                   ? 'bg-yellow-400 shadow-[0_0_3px_rgba(250,204,21,0.4)]'
                   : 'bg-zinc-700 dark:bg-zinc-600'
               }`}
               aria-label={
-                isSessionActive ? 'Sessions active' : 'No active sessions'
+                hasActiveSessions ? 'Sessions active' : 'No active sessions'
               }
             />
-            <span className='truncate'>{project.name}</span>
+            <span className='truncate'>{localProject.name}</span>
           </div>
           {lastActivity && (
             <span className='text-sm font-normal text-muted-foreground/60 sm:shrink-0'>
@@ -82,10 +95,10 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
         <CardAction>
           <div className='flex gap-4'>
             <OpenSessionButton
-              sessions={project.activeSessions}
+              sessions={localProject.activeSessions}
               newestSessionName={newestSession?.name}
             />
-            <PlayButton projectPath={project.path} />
+            <PlayButton projectPath={localProject.path} />
           </div>
         </CardAction>
       </CardHeader>
