@@ -79,12 +79,12 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
         new Date(b.startTime!).getTime() - new Date(a.startTime!).getTime(),
     )[0]
 
-  const handleCreateSession = (data: TmuxComposerEvent) => {
+  const handleSessionObservationStarted = (data: TmuxComposerEvent) => {
     if (!isRelevantSessionEvent(data, project.path)) return
 
     const newSession: SessionData = {
       name: data.payload.context.session.name,
-      mode: data.payload.context.session?.mode || 'worktree',
+      mode: data.payload.context.session.mode || 'worktree',
       startTime: data.timestamp || new Date().toISOString(),
     }
 
@@ -94,31 +94,28 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
     }))
   }
 
-  const handleSessionEnd = (data: TmuxComposerEvent) => {
+  const handleSessionObservationExited = (data: TmuxComposerEvent) => {
     if (!isRelevantSessionEvent(data, project.path)) return
 
     const sessionName = data.payload.context.session.name
 
-    setLocalProject(prev => {
-      if (!prev.activeSessions?.some(session => session.name === sessionName)) {
-        return prev
-      }
-
-      return {
-        ...prev,
-        activeSessions: removeSessionFromList(prev.activeSessions, sessionName),
-      }
-    })
+    setLocalProject(prev => ({
+      ...prev,
+      activeSessions: removeSessionFromList(
+        prev.activeSessions || [],
+        sessionName,
+      ),
+    }))
   }
 
   useWebSocketSubscription<TmuxComposerEvent>(
-    'create-worktree-session:end',
-    handleCreateSession,
+    'observe-session:start',
+    handleSessionObservationStarted,
   )
 
   useWebSocketSubscription<TmuxComposerEvent>(
-    'session-terminated:start',
-    handleSessionEnd,
+    'observe-session:exit',
+    handleSessionObservationExited,
   )
 
   return (
