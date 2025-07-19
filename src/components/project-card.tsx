@@ -68,9 +68,10 @@ const removeSessionFromList = (
 
 export function ProjectCard({ project }: { project: ProjectInfo }) {
   const [localProject, setLocalProject] = useState(project)
-  const lastActivity = localProject.latestChat || localProject.latestCommit
   const hasActiveSessions =
     localProject.activeSessions && localProject.activeSessions.length > 0
+
+  const lastActivity = localProject.lastActivity
 
   const newestSession = localProject.activeSessions
     ?.filter(session => session.startTime)
@@ -91,6 +92,7 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
     setLocalProject(prev => ({
       ...prev,
       activeSessions: addSessionToList(prev.activeSessions || [], newSession),
+      lastActivity: newSession.startTime,
     }))
   }
 

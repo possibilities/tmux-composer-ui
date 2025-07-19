@@ -6,6 +6,21 @@ import { config } from '@/lib/config-node'
 
 const execAsync = promisify(exec)
 
+function getMostRecentSessionStartTime(
+  sessions?: Array<{ startTime?: string }>,
+): string | undefined {
+  if (!sessions || sessions.length === 0) return undefined
+
+  return sessions.reduce<string | undefined>((mostRecent, session) => {
+    if (!session.startTime) return mostRecent
+    if (!mostRecent) return session.startTime
+
+    return new Date(session.startTime) > new Date(mostRecent)
+      ? session.startTime
+      : mostRecent
+  }, undefined)
+}
+
 export type ProjectInfo = {
   name: string
   path: string
@@ -27,6 +42,7 @@ export type ProjectInfo = {
     mode: string
     startTime?: string
   }>
+  lastActivity?: string
 }
 
 export async function getProjects(): Promise<ProjectInfo[]> {
@@ -55,7 +71,20 @@ export async function getProjects(): Promise<ProjectInfo[]> {
     const projectsMap: ProjectsMap = JSON.parse(listProjectsResult.stdout)
 
     const projects = Object.values(projectsMap)
-      .map(({ project }) => project)
+      .map(({ project }) => {
+        const mostRecentSessionStartTime = getMostRecentSessionStartTime(
+          project.activeSessions,
+        )
+        const lastActivity =
+          mostRecentSessionStartTime ||
+          project.latestChat ||
+          project.latestCommit
+
+        return {
+          ...project,
+          lastActivity,
+        }
+      })
       .filter(
         project =>
           project.isProjectsPath ||
@@ -64,8 +93,8 @@ export async function getProjects(): Promise<ProjectInfo[]> {
       )
 
     return projects.sort((a, b) => {
-      const aTime = a.latestChat || a.latestCommit
-      const bTime = b.latestChat || b.latestCommit
+      const aTime = a.lastActivity
+      const bTime = b.lastActivity
 
       if (!aTime && !bTime) return a.name.localeCompare(b.name)
       if (!aTime) return 1
