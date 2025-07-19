@@ -70,7 +70,7 @@ function CollapsibleMessage({ message }: CollapsibleMessageProps) {
 
           {isExpanded && (
             <pre className='mt-2 whitespace-pre-wrap break-all text-xs'>
-              {JSON.stringify(message.parsedData, null, 2)}
+              {message.data}
             </pre>
           )}
         </div>
@@ -92,16 +92,39 @@ export function WebSocketClient() {
     '*',
     data => {
       let messageType: string | undefined
+      let parsedData: Record<string, unknown> | undefined
+      let dataString: string
 
-      if (typeof data === 'object' && data !== null) {
-        messageType = extractMessageType(data)
+      try {
+        if (typeof data === 'object' && data !== null) {
+          messageType = extractMessageType(data)
+          parsedData = data as Record<string, unknown>
+          dataString = JSON.stringify(data, null, 2)
+        } else if (typeof data === 'string') {
+          dataString = data
+          try {
+            const parsed = JSON.parse(data)
+            if (typeof parsed === 'object' && parsed !== null) {
+              parsedData = parsed
+              messageType = extractMessageType(parsed)
+            }
+          } catch {
+            // Data is not valid JSON, keep as string
+          }
+        } else {
+          dataString = String(data)
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error)
+        dataString =
+          typeof data === 'string' ? data : 'Error processing message'
       }
 
       const newMessage: WebSocketMessage = {
         id: Date.now().toString(),
         timestamp: new Date().toLocaleTimeString(),
-        data: JSON.stringify(data),
-        parsedData: data as Record<string, unknown>,
+        data: dataString,
+        parsedData,
         type: messageType,
       }
       setMessages(prev => [...prev, newMessage])
