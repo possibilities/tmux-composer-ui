@@ -37,56 +37,88 @@ interface TmuxComposerEvent {
   sessionId?: string
 }
 
+const isRelevantSessionEvent = (
+  data: TmuxComposerEvent,
+  projectPath: string,
+): data is TmuxComposerEvent & {
+  payload: { context: { session: { name: string } } }
+} => {
+  return (
+    data.payload.context.project?.path === projectPath &&
+    !!data.payload.context.session?.name
+  )
+}
+
+const addSessionToList = (
+  sessions: SessionData[],
+  newSession: SessionData,
+): SessionData[] => {
+  const sessionAlreadyExists = sessions.some(
+    session => session.name === newSession.name,
+  )
+  return sessionAlreadyExists ? sessions : [...sessions, newSession]
+}
+
+const removeSessionFromList = (
+  sessions: SessionData[],
+  sessionName: string,
+): SessionData[] => {
+  return sessions.filter(session => session.name !== sessionName)
+}
+
 export function ProjectCard({ project }: { project: ProjectInfo }) {
   const [localProject, setLocalProject] = useState(project)
   const lastActivity = localProject.latestChat || localProject.latestCommit
   const hasActiveSessions =
     localProject.activeSessions && localProject.activeSessions.length > 0
 
-  const newestSession = localProject.activeSessions?.reduce(
-    (newest, session) => {
-      if (!newest) return session
-      if (!session.startTime || !newest.startTime) return newest
-      return new Date(session.startTime) > new Date(newest.startTime)
-        ? session
-        : newest
-    },
-    null as (typeof localProject.activeSessions)[0] | null,
-  )
+  const newestSession = localProject.activeSessions
+    ?.filter(session => session.startTime)
+    .sort(
+      (a, b) =>
+        new Date(b.startTime!).getTime() - new Date(a.startTime!).getTime(),
+    )[0]
 
   const handleCreateSession = (data: TmuxComposerEvent) => {
-    if (
-      data.payload.context.project?.path === project.path &&
-      data.payload.context.session?.name
-    ) {
-      const sessionName = data.payload.context.session.name
+    if (!isRelevantSessionEvent(data, project.path)) return
 
-      setLocalProject(prev => {
-        const sessionAlreadyExists = prev.activeSessions?.some(
-          session => session.name === sessionName,
-        )
-
-        if (sessionAlreadyExists) {
-          return prev
-        }
-
-        const newSession: SessionData = {
-          name: sessionName,
-          mode: data.payload.context.session?.mode || 'worktree',
-          startTime: data.timestamp || new Date().toISOString(),
-        }
-
-        return {
-          ...prev,
-          activeSessions: [...(prev.activeSessions || []), newSession],
-        }
-      })
+    const newSession: SessionData = {
+      name: data.payload.context.session.name,
+      mode: data.payload.context.session?.mode || 'worktree',
+      startTime: data.timestamp || new Date().toISOString(),
     }
+
+    setLocalProject(prev => ({
+      ...prev,
+      activeSessions: addSessionToList(prev.activeSessions || [], newSession),
+    }))
+  }
+
+  const handleSessionEnd = (data: TmuxComposerEvent) => {
+    if (!isRelevantSessionEvent(data, project.path)) return
+
+    const sessionName = data.payload.context.session.name
+
+    setLocalProject(prev => {
+      if (!prev.activeSessions?.some(session => session.name === sessionName)) {
+        return prev
+      }
+
+      return {
+        ...prev,
+        activeSessions: removeSessionFromList(prev.activeSessions, sessionName),
+      }
+    })
   }
 
   useWebSocketSubscription<TmuxComposerEvent>(
     'create-worktree-session:end',
     handleCreateSession,
+  )
+
+  useWebSocketSubscription<TmuxComposerEvent>(
+    'session-terminated:start',
+    handleSessionEnd,
   )
 
   return (
