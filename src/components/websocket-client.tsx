@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { ChevronRight, ChevronDown, ClipboardCopy } from 'lucide-react'
 import { useWebSocketSubscription } from '@/lib/use-websocket-subscription'
 
@@ -83,6 +84,8 @@ function CollapsibleMessage({ message }: CollapsibleMessageProps) {
 export function WebSocketClient() {
   const url = process.env.NEXT_PUBLIC_WEBSOCKET_URL
   const [messages, setMessages] = useState<WebSocketMessage[]>([])
+  const [includeFilter, setIncludeFilter] = useState('')
+  const [excludeFilter, setExcludeFilter] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { isConnected, isConnecting, error } = useWebSocketSubscription(
@@ -109,6 +112,24 @@ export function WebSocketClient() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const filterMessages = (messages: WebSocketMessage[]): WebSocketMessage[] => {
+    return messages.filter(message => {
+      const eventType = (message.type || '').toLowerCase()
+      const includeFilterLower = includeFilter.toLowerCase()
+      const excludeFilterLower = excludeFilter.toLowerCase()
+
+      if (includeFilterLower && !eventType.includes(includeFilterLower)) {
+        return false
+      }
+
+      if (excludeFilterLower && eventType.includes(excludeFilterLower)) {
+        return false
+      }
+
+      return true
+    })
+  }
+
   useEffect(() => {
     scrollToBottom()
   }, [messages])
@@ -118,7 +139,8 @@ export function WebSocketClient() {
   }
 
   const copyMessagesAsJsonLines = async () => {
-    const jsonLines = messages
+    const filteredMessages = filterMessages(messages)
+    const jsonLines = filteredMessages
       .map(message => {
         const dataToSerialize = message.parsedData || JSON.parse(message.data)
         return JSON.stringify(dataToSerialize)
@@ -146,6 +168,41 @@ export function WebSocketClient() {
 
   return (
     <div className='space-y-4'>
+      <Card className='p-4'>
+        <div className='flex gap-4'>
+          <div className='flex-1'>
+            <label
+              htmlFor='include-filter'
+              className='mb-1 block text-sm text-muted-foreground'
+            >
+              Include
+            </label>
+            <Input
+              id='include-filter'
+              type='text'
+              placeholder='Event type must contain...'
+              value={includeFilter}
+              onChange={e => setIncludeFilter(e.target.value)}
+            />
+          </div>
+          <div className='flex-1'>
+            <label
+              htmlFor='exclude-filter'
+              className='mb-1 block text-sm text-muted-foreground'
+            >
+              Exclude
+            </label>
+            <Input
+              id='exclude-filter'
+              type='text'
+              placeholder='Event type must not contain...'
+              value={excludeFilter}
+              onChange={e => setExcludeFilter(e.target.value)}
+            />
+          </div>
+        </div>
+      </Card>
+
       <Card className='p-4'>
         <div className='mb-4 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
@@ -198,14 +255,14 @@ export function WebSocketClient() {
 
       <Card className='p-4'>
         <h2 className='mb-3 font-semibold'>Messages</h2>
-        <div className='h-[calc(100vh-20rem)] overflow-y-auto'>
+        <div className='h-[calc(100vh-25rem)] overflow-y-auto'>
           {messages.length === 0 ? (
             <p className='text-center text-muted-foreground'>
               No messages received yet
             </p>
           ) : (
             <div className='space-y-2'>
-              {messages.map(message => (
+              {filterMessages(messages).map(message => (
                 <CollapsibleMessage
                   key={`${message.id}-${message.type || 'unknown'}`}
                   message={message}
