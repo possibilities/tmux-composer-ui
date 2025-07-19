@@ -14,12 +14,27 @@ interface SessionData {
   startTime?: string
 }
 
-interface SessionEvent {
+interface TmuxComposerEvent {
   event: string
-  projectPath?: string
-  session?: SessionData
-  sessionName?: string
-  [key: string]: unknown
+  payload: {
+    context: {
+      project?: {
+        name?: string
+        path?: string
+      }
+      session?: {
+        name?: string
+        mode?: string
+      }
+      worktree?: {
+        path?: string
+        number?: string
+      }
+    }
+    details?: Record<string, unknown>
+  }
+  timestamp?: string
+  sessionId?: string
 }
 
 export function ProjectCard({ project }: { project: ProjectInfo }) {
@@ -39,33 +54,38 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
     null as (typeof localProject.activeSessions)[0] | null,
   )
 
-  const handleKillSession = (data: SessionEvent) => {
-    if (data.projectPath === project.path && data.sessionName) {
-      setLocalProject(prev => ({
-        ...prev,
-        activeSessions:
-          prev.activeSessions?.filter(
-            session => session.name !== data.sessionName,
-          ) || [],
-      }))
+  const handleCreateSession = (data: TmuxComposerEvent) => {
+    if (
+      data.payload.context.project?.path === project.path &&
+      data.payload.context.session?.name
+    ) {
+      const sessionName = data.payload.context.session.name
+
+      setLocalProject(prev => {
+        const sessionAlreadyExists = prev.activeSessions?.some(
+          session => session.name === sessionName,
+        )
+
+        if (sessionAlreadyExists) {
+          return prev
+        }
+
+        const newSession: SessionData = {
+          name: sessionName,
+          mode: data.payload.context.session?.mode || 'worktree',
+          startTime: data.timestamp || new Date().toISOString(),
+        }
+
+        return {
+          ...prev,
+          activeSessions: [...(prev.activeSessions || []), newSession],
+        }
+      })
     }
   }
 
-  const handleCreateSession = (data: SessionEvent) => {
-    if (data.projectPath === project.path && data.session) {
-      setLocalProject(prev => ({
-        ...prev,
-        activeSessions: [...(prev.activeSessions || []), data.session!],
-      }))
-    }
-  }
-
-  useWebSocketSubscription<SessionEvent>(
-    'kill-current-session:start',
-    handleKillSession,
-  )
-  useWebSocketSubscription<SessionEvent>(
-    'create-tmux-session:start',
+  useWebSocketSubscription<TmuxComposerEvent>(
+    'create-worktree-session:end',
     handleCreateSession,
   )
 

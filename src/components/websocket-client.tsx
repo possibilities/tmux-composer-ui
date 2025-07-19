@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { ChevronRight, ChevronDown } from 'lucide-react'
+import { ChevronRight, ChevronDown, ClipboardCopy } from 'lucide-react'
 import { useWebSocketSubscription } from '@/lib/use-websocket-subscription'
 
 interface WebSocketMessage {
@@ -27,22 +27,9 @@ function extractMessageType(data: unknown): string | undefined {
 }
 
 function extractSourceScript(data: unknown): string | undefined {
-  if (
-    typeof data === 'object' &&
-    data !== null &&
-    'source' in data &&
-    typeof (data as Record<string, unknown>).source === 'object' &&
-    (data as Record<string, unknown>).source !== null
-  ) {
-    const source = (data as Record<string, unknown>).source as Record<
-      string,
-      unknown
-    >
-    if ('script' in source && typeof source.script === 'string') {
-      return source.script
-    }
-  }
-  return undefined
+  const typedData = data as Record<string, unknown> | null
+  const source = typedData?.source as Record<string, unknown> | undefined
+  return typeof source?.script === 'string' ? source.script : undefined
 }
 
 function CollapsibleMessage({ message }: CollapsibleMessageProps) {
@@ -130,6 +117,22 @@ export function WebSocketClient() {
     setMessages([])
   }
 
+  const copyMessagesAsJsonLines = async () => {
+    const jsonLines = messages
+      .map(message => {
+        const dataToSerialize = message.parsedData || JSON.parse(message.data)
+        return JSON.stringify(dataToSerialize)
+      })
+      .join('\n')
+
+    try {
+      await navigator.clipboard.writeText(jsonLines)
+      console.log('Messages copied as JSON lines')
+    } catch (err) {
+      console.error('Failed to copy messages:', err)
+    }
+  }
+
   if (!url) {
     return (
       <div className='rounded-lg border border-dashed p-8 text-center'>
@@ -164,6 +167,15 @@ export function WebSocketClient() {
             </span>
           </div>
           <div className='flex gap-2'>
+            <Button
+              onClick={copyMessagesAsJsonLines}
+              size='sm'
+              variant='outline'
+              disabled={messages.length === 0}
+            >
+              <ClipboardCopy className='h-4 w-4' />
+              Copy as JSONL
+            </Button>
             <Button
               onClick={clearMessages}
               size='sm'
