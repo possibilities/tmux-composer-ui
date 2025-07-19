@@ -75,10 +75,19 @@ export async function getProjects(): Promise<ProjectInfo[]> {
         const mostRecentSessionStartTime = getMostRecentSessionStartTime(
           project.activeSessions,
         )
+
+        const availableTimestamps = [
+          mostRecentSessionStartTime,
+          project.latestChat,
+          project.latestCommit,
+        ].filter(Boolean)
+
         const lastActivity =
-          mostRecentSessionStartTime ||
-          project.latestChat ||
-          project.latestCommit
+          availableTimestamps.length > 0
+            ? availableTimestamps.reduce((newest, current) => {
+                return new Date(current!) > new Date(newest!) ? current : newest
+              })
+            : undefined
 
         return {
           ...project,
