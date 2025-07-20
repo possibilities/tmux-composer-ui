@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Play, ChevronDown } from 'lucide-react'
 import { startSession } from '@/app/actions'
@@ -11,10 +12,18 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 export function PlayButton({ projectPath }: { projectPath: string }) {
-  const handleStartSession = async () => {
+  const router = useRouter()
+
+  const handleStartSession = async (foreground: boolean = true) => {
     const result = await startSession(projectPath)
     if (!result.success) {
       console.error('Failed to start session:', result.error)
+      return
+    }
+
+    if (foreground && result.sessionName) {
+      const projectName = projectPath.split('/').pop() || 'unknown'
+      router.push(`/${projectName}/${result.sessionName}`)
     }
   }
 
@@ -24,7 +33,7 @@ export function PlayButton({ projectPath }: { projectPath: string }) {
         size='icon'
         variant='outline'
         className='rounded-r-none'
-        onClick={handleStartSession}
+        onClick={() => handleStartSession(true)}
       >
         <Play className='size-4' />
       </Button>
@@ -39,7 +48,12 @@ export function PlayButton({ projectPath }: { projectPath: string }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end'>
-          <DropdownMenuItem disabled>No options available</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleStartSession(true)}>
+            Start in foreground
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleStartSession(false)}>
+            Start in background
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

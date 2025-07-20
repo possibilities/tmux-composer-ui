@@ -118,13 +118,31 @@ export async function getProjects(): Promise<ProjectInfo[]> {
 
 export async function startSession(projectPath: string) {
   try {
-    await execAsync(
+    const result = await execAsync(
       `tmux-composer start-session --tmux-socket ${config.tmuxServer}`,
       {
         cwd: projectPath,
       },
     )
-    return { success: true }
+
+    // Parse newline-delimited JSON output
+    const lines = result.stdout.trim().split('\n')
+    let sessionName: string | undefined
+
+    for (const line of lines) {
+      try {
+        const data = JSON.parse(line)
+        // Look for session name in context
+        if (data.payload?.context?.session?.name) {
+          sessionName = data.payload.context.session.name
+          break
+        }
+      } catch {
+        // Skip lines that aren't valid JSON
+      }
+    }
+
+    return { success: true, sessionName }
   } catch (error) {
     console.error('Failed to start session:', error)
     return {
