@@ -16,7 +16,7 @@ import { getFullProjectPath } from '@/lib/utils'
 export default async function SessionDetailPage({
   params,
 }: {
-  params: { project: string; session: string }
+  params: Promise<{ project: string; session: string }>
 }) {
   const { project, session } = await params
   const decodedProject = decodeURIComponent(project)
