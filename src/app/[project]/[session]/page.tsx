@@ -13,6 +13,22 @@ import { getProjectDetails, getSessionDetails } from '@/app/actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getFullProjectPath } from '@/lib/utils'
 
+type SessionPane = {
+  index: string
+  width: number
+  height: number
+  currentCommand: string
+  currentPath: string
+  content: string
+}
+
+type SessionWindow = {
+  index: number
+  name: string
+  active: boolean
+  panes: SessionPane[]
+}
+
 export default async function SessionDetailPage({
   params,
 }: {
@@ -91,6 +107,36 @@ export default async function SessionDetailPage({
               )}
             </CardContent>
           </Card>
+
+          {sessionDetails.success && sessionDetails.data?.session?.windows && (
+            <div className='space-y-4'>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Session Panes</CardTitle>
+                </CardHeader>
+              </Card>
+              {sessionDetails.data.session.windows.flatMap(
+                (window: SessionWindow) =>
+                  window.panes.map((pane: SessionPane) => {
+                    const paneIdentifier = `${decodedSession}-${window.name}-${pane.index}`
+                    return (
+                      <Card key={paneIdentifier}>
+                        <CardHeader>
+                          <CardTitle className='text-lg'>
+                            {window.name} - Pane {pane.index}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <pre className='overflow-auto rounded-md bg-muted p-4 text-xs'>
+                            {pane.content}
+                          </pre>
+                        </CardContent>
+                      </Card>
+                    )
+                  }),
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
