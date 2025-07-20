@@ -9,6 +9,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { getProjectDetails } from '@/app/actions'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { getFullProjectPath } from '@/lib/utils'
 
 export default async function SessionDetailPage({
   params,
@@ -19,10 +22,13 @@ export default async function SessionDetailPage({
   const decodedProject = decodeURIComponent(project)
   const decodedSession = decodeURIComponent(session)
 
+  const projectPath = getFullProjectPath(decodedProject)
+  const projectDetails = await getProjectDetails(projectPath)
+
   return (
     <div className='min-h-screen p-8'>
       <div className='mx-auto max-w-7xl'>
-        <div className='flex items-center gap-4'>
+        <div className='mb-8 flex items-center gap-4'>
           <Button variant='ghost' size='icon' asChild className='h-8 w-8'>
             <Link href='/'>
               <ChevronLeft className='h-4 w-4' />
@@ -49,6 +55,23 @@ export default async function SessionDetailPage({
             </BreadcrumbList>
           </Breadcrumb>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Project Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {projectDetails.success ? (
+              <pre className='overflow-auto rounded-md bg-muted p-4'>
+                {JSON.stringify(projectDetails.data, null, 2)}
+              </pre>
+            ) : (
+              <div className='text-destructive'>
+                Error loading project details: {projectDetails.error}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

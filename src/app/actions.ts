@@ -181,3 +181,23 @@ export async function finishSession(sessionName: string) {
     }
   }
 }
+
+export async function getProjectDetails(projectPath: string) {
+  try {
+    const result = await execAsync(
+      `tmux-composer show-project --tmux-socket ${config.tmuxServer}`,
+      {
+        cwd: projectPath,
+      },
+    )
+
+    const projectDetails = JSON.parse(result.stdout)
+    return { success: true, data: projectDetails }
+  } catch (error) {
+    console.error('Failed to get project details:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
