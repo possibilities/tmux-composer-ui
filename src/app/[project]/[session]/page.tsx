@@ -117,13 +117,13 @@ export default async function SessionDetailPage({
               </Card>
               {sessionDetails.data.session.windows.flatMap(
                 (window: SessionWindow) =>
-                  window.panes.map((pane: SessionPane) => {
+                  window.panes.flatMap((pane: SessionPane) => {
                     const paneIdentifier = `${decodedSession}-${window.name}-${pane.index}`
-                    return (
-                      <Card key={paneIdentifier}>
+                    return [
+                      <Card key={`${paneIdentifier}-pre`}>
                         <CardHeader>
                           <CardTitle className='text-lg'>
-                            {window.name} - Pane {pane.index}
+                            {window.name} - Pane {pane.index} [pre]
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -131,8 +131,20 @@ export default async function SessionDetailPage({
                             {pane.content}
                           </pre>
                         </CardContent>
-                      </Card>
-                    )
+                      </Card>,
+                      <Card key={`${paneIdentifier}-term`}>
+                        <CardHeader>
+                          <CardTitle className='text-lg'>
+                            {window.name} - Pane {pane.index} [term]
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <pre className='overflow-auto rounded-md bg-muted p-4 text-xs'>
+                            {pane.content}
+                          </pre>
+                        </CardContent>
+                      </Card>,
+                    ]
                   }),
               )}
             </div>
