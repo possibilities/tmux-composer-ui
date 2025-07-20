@@ -9,9 +9,10 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { getProjectDetails } from '@/app/actions'
+import { getProjectDetails, getSessionDetails } from '@/app/actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getFullProjectPath } from '@/lib/utils'
+import { SessionTerminalsWrapper } from '@/components/session-terminals-wrapper'
 
 export default async function SessionDetailPage({
   params,
@@ -24,6 +25,7 @@ export default async function SessionDetailPage({
 
   const projectPath = getFullProjectPath(decodedProject)
   const projectDetails = await getProjectDetails(projectPath)
+  const sessionDetails = await getSessionDetails(decodedSession)
 
   return (
     <div className='min-h-screen p-8'>
@@ -56,22 +58,42 @@ export default async function SessionDetailPage({
           </Breadcrumb>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Project Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {projectDetails.success ? (
-              <pre className='overflow-auto rounded-md bg-muted p-4'>
-                {JSON.stringify(projectDetails.data, null, 2)}
-              </pre>
-            ) : (
-              <div className='text-destructive'>
-                Error loading project details: {projectDetails.error}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className='space-y-8'>
+          <SessionTerminalsWrapper sessionDetails={sessionDetails} />
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {projectDetails.success ? (
+                <pre className='overflow-auto rounded-md bg-muted p-4'>
+                  {JSON.stringify(projectDetails.data, null, 2)}
+                </pre>
+              ) : (
+                <div className='text-destructive'>
+                  Error loading project details: {projectDetails.error}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Session Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {sessionDetails.success ? (
+                <pre className='overflow-auto rounded-md bg-muted p-4'>
+                  {JSON.stringify(sessionDetails.data, null, 2)}
+                </pre>
+              ) : (
+                <div className='text-destructive'>
+                  Error loading session details: {sessionDetails.error}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

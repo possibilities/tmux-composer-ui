@@ -23,10 +23,9 @@ export default function RootLayout({
           href='https://fonts.gstatic.com'
           crossOrigin='anonymous'
         />
-        {/* See: https://chatgpt.com/c/681ca606-b550-8001-88c7-84fe99e7dcaf */}
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
-          href='https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=optional'
+          href='https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=Geist+Mono:wght@100..900&display=optional'
           rel='stylesheet'
         />
       </head>

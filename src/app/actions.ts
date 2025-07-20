@@ -201,3 +201,20 @@ export async function getProjectDetails(projectPath: string) {
     }
   }
 }
+
+export async function getSessionDetails(sessionName: string) {
+  try {
+    const result = await execAsync(
+      `tmux-composer show-session --tmux-socket ${config.tmuxServer} "${sessionName}"`,
+    )
+
+    const sessionDetails = JSON.parse(result.stdout)
+    return { success: true, data: sessionDetails }
+  } catch (error) {
+    console.error('Failed to get session details:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
