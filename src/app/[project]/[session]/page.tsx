@@ -12,7 +12,6 @@ import {
 import { getProjectDetails, getSessionDetails } from '@/app/actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getFullProjectPath } from '@/lib/utils'
-import { SessionTerminalsWrapper } from '@/components/session-terminals-wrapper'
 
 export default async function SessionDetailPage({
   params,
@@ -59,7 +58,6 @@ export default async function SessionDetailPage({
         </div>
 
         <div className='space-y-8'>
-          <SessionTerminalsWrapper sessionDetails={sessionDetails} />
           <Card>
             <CardHeader>
               <CardTitle>Project Details</CardTitle>
