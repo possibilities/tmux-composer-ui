@@ -12,7 +12,7 @@ import {
 import { getProjectDetails, getSessionDetails } from '@/app/actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getFullProjectPath } from '@/lib/utils'
-import { TerminalDisplay } from '@/components/terminal-display-simple'
+import { SessionPaneViews } from '@/components/session-pane-views'
 
 type SessionPane = {
   index: string
@@ -83,40 +83,14 @@ export default async function SessionDetailPage({
             </Card>
             {sessionDetails.data.session.windows.flatMap(
               (window: SessionWindow) =>
-                window.panes.flatMap((pane: SessionPane) => {
-                  const paneIdentifier = `${decodedSession}-${window.name}-${pane.index}`
-                  return [
-                    <Card key={`${paneIdentifier}-pre`}>
-                      <CardHeader>
-                        <CardTitle className='text-lg'>
-                          {window.name} - Pane {pane.index} [pre]
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <pre className='overflow-auto rounded-md bg-muted p-4 text-xs'>
-                          {pane.content}
-                        </pre>
-                      </CardContent>
-                    </Card>,
-                    <Card
-                      key={`${paneIdentifier}-term`}
-                      className='overflow-visible'
-                    >
-                      <CardHeader>
-                        <CardTitle className='text-lg'>
-                          {window.name} - Pane {pane.index} [term] ({pane.width}
-                          x{pane.height})
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className='overflow-visible p-0'>
-                        <TerminalDisplay
-                          content={pane.content}
-                          width={pane.width}
-                        />
-                      </CardContent>
-                    </Card>,
-                  ]
-                }),
+                window.panes.map((pane: SessionPane) => (
+                  <SessionPaneViews
+                    key={`${decodedSession}-${window.name}-${pane.index}`}
+                    pane={pane}
+                    windowName={window.name}
+                    sessionName={decodedSession}
+                  />
+                )),
             )}
           </div>
         )}
