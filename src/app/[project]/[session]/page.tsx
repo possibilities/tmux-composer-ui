@@ -88,7 +88,6 @@ export default async function SessionDetailPage({
                     key={`${decodedSession}-${window.name}-${pane.index}`}
                     pane={pane}
                     windowName={window.name}
-                    sessionName={decodedSession}
                   />
                 )),
             )}
