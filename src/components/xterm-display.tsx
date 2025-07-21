@@ -59,6 +59,8 @@ export function XtermDisplay({ content, width, height }: XtermDisplayProps) {
       terminal.write(content)
       fitAddon.fit()
 
+      terminal.attachCustomWheelEventHandler(() => false)
+
       terminalInstanceRef.current = terminal
       fitAddonRef.current = fitAddon
 
@@ -90,12 +92,7 @@ export function XtermDisplay({ content, width, height }: XtermDisplayProps) {
         borderRadius: 'calc(var(--radius) - 2px)',
       }}
     >
-      <div
-        ref={terminalRef}
-        style={{
-          pointerEvents: 'none',
-        }}
-      />
+      <div ref={terminalRef} />
     </div>
   )
 }
