@@ -46,6 +46,7 @@ export function XtermDisplay({ content, width, height }: XtermDisplayProps) {
         disableStdin: true,
         cursorBlink: false,
         scrollback: 0,
+        rightClickSelectsWord: false,
       })
 
       const fitAddon = new FitAddon()
@@ -89,7 +90,12 @@ export function XtermDisplay({ content, width, height }: XtermDisplayProps) {
         borderRadius: 'calc(var(--radius) - 2px)',
       }}
     >
-      <div ref={terminalRef} />
+      <div
+        ref={terminalRef}
+        style={{
+          pointerEvents: 'none',
+        }}
+      />
     </div>
   )
 }
