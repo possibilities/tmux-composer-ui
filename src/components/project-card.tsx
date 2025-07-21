@@ -148,6 +148,7 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
             <OpenSessionButton
               sessions={localProject.activeSessions}
               newestSessionName={newestSession?.name}
+              projectPath={localProject.path}
             />
             <PlayButton projectPath={localProject.path} />
           </div>

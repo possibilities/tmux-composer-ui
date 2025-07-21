@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Monitor, ChevronDown } from 'lucide-react'
 import { switchToSession, type ProjectInfo } from '@/app/actions'
@@ -9,21 +10,29 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { buildSessionPageUrl } from '@/lib/navigation'
 
 export function OpenSessionButton({
   sessions,
   newestSessionName,
+  projectPath,
 }: {
   sessions?: NonNullable<ProjectInfo['activeSessions']>
   newestSessionName?: string
+  projectPath: string
 }) {
+  const router = useRouter()
   const hasNoSessions = !sessions || sessions.length === 0 || !newestSessionName
 
   const handleSwitchSession = async (sessionName: string) => {
     const result = await switchToSession(sessionName)
     if (!result.success) {
       console.error('Failed to switch session:', result.error)
+      return
     }
+
+    const sessionPageUrl = buildSessionPageUrl(projectPath, sessionName)
+    router.push(sessionPageUrl)
   }
 
   return (

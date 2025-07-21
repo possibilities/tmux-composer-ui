@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { buildSessionPageUrl } from '@/lib/navigation'
 
 export function PlayButton({ projectPath }: { projectPath: string }) {
   const router = useRouter()
@@ -22,8 +23,11 @@ export function PlayButton({ projectPath }: { projectPath: string }) {
     }
 
     if (foreground && result.sessionName) {
-      const projectName = projectPath.split('/').pop() || 'unknown'
-      router.push(`/${projectName}/${result.sessionName}`)
+      const sessionPageUrl = buildSessionPageUrl(
+        projectPath,
+        result.sessionName,
+      )
+      router.push(sessionPageUrl)
     }
   }
 
