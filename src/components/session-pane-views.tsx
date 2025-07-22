@@ -15,6 +15,9 @@ type SessionPane = {
   currentCommand: string
   currentPath: string
   content: string
+  cursorX: number
+  cursorY: number
+  active: boolean
 }
 
 interface SessionPaneViewsProps {
@@ -35,6 +38,8 @@ export function SessionPaneViews({ pane, windowName }: SessionPaneViewsProps) {
           content={pane.content}
           width={pane.width}
           height={pane.height}
+          cursorX={pane.cursorX}
+          cursorY={pane.cursorY}
         />
       </CardContent>
     </Card>

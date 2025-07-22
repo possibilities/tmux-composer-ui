@@ -10,9 +10,17 @@ interface XtermDisplayProps {
   content: string
   width?: number
   height?: number
+  cursorX?: number
+  cursorY?: number
 }
 
-export function XtermDisplay({ content, width, height }: XtermDisplayProps) {
+export function XtermDisplay({
+  content,
+  width,
+  height,
+  cursorX,
+  cursorY,
+}: XtermDisplayProps) {
   const terminalRef = useRef<HTMLDivElement>(null)
   const terminalInstanceRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
@@ -38,7 +46,8 @@ export function XtermDisplay({ content, width, height }: XtermDisplayProps) {
           cursor: '#ffffff',
           cursorAccent: '#000000',
         },
-        cursorInactiveStyle: 'none',
+        cursorStyle: 'block',
+        cursorInactiveStyle: 'block',
         fontFamily: "'Fira Code', 'Fira Code Retina', monospace",
         fontSize: 14,
         fontWeight: 'normal',
@@ -58,13 +67,14 @@ export function XtermDisplay({ content, width, height }: XtermDisplayProps) {
 
       terminal.open(terminalRef.current)
       terminal.write(content)
+      if (cursorX !== undefined && cursorY !== undefined) {
+        const col = Math.min(Math.max(cursorX + 1, 1), terminal.cols)
+        const row = Math.min(Math.max(cursorY + 1, 1), terminal.rows)
+        terminal.write(`\x1b[${row};${col}H`)
+      }
       fitAddon.fit()
 
       terminal.attachCustomWheelEventHandler(() => false)
-
-      terminal.textarea?.addEventListener('focus', () => {
-        terminal.blur()
-      })
 
       terminalInstanceRef.current = terminal
       fitAddonRef.current = fitAddon
@@ -88,7 +98,7 @@ export function XtermDisplay({ content, width, height }: XtermDisplayProps) {
       resizeHandlerRef.current = null
       initializedRef.current = false
     }
-  }, [content, height, width])
+  }, [content, height, width, cursorX, cursorY])
 
   return (
     <div

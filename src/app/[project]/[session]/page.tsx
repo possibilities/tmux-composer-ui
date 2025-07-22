@@ -21,6 +21,9 @@ type SessionPane = {
   currentCommand: string
   currentPath: string
   content: string
+  cursorX: number
+  cursorY: number
+  active: boolean
 }
 
 type SessionWindow = {
