@@ -38,6 +38,7 @@ export function XtermDisplay({ content, width, height }: XtermDisplayProps) {
           cursor: '#ffffff',
           cursorAccent: '#000000',
         },
+        cursorInactiveStyle: 'none',
         fontFamily: "'Fira Code', 'Fira Code Retina', monospace",
         fontSize: 14,
         fontWeight: 'normal',
@@ -60,6 +61,10 @@ export function XtermDisplay({ content, width, height }: XtermDisplayProps) {
       fitAddon.fit()
 
       terminal.attachCustomWheelEventHandler(() => false)
+
+      terminal.textarea?.addEventListener('focus', () => {
+        terminal.blur()
+      })
 
       terminalInstanceRef.current = terminal
       fitAddonRef.current = fitAddon
