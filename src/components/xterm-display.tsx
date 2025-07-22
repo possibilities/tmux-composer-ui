@@ -109,7 +109,9 @@ export function XtermDisplay({
       })
 
       if (isActive && !contentHasVisibleCursor) {
-        terminal.focus()
+        setTimeout(() => {
+          terminal.focus()
+        }, 100)
       } else {
         terminal.blur()
       }

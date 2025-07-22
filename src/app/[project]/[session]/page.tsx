@@ -13,6 +13,7 @@ import { getProjectDetails, getSessionDetails } from '@/app/actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getFullProjectPath } from '@/lib/utils'
 import { SessionPaneViews } from '@/components/session-pane-views'
+import { ScrollToTop } from '@/components/scroll-to-top'
 
 type SessionPane = {
   index: string
@@ -48,6 +49,7 @@ export default async function SessionDetailPage({
 
   return (
     <div className='min-h-screen p-8'>
+      <ScrollToTop />
       <div className='mb-8 flex items-center gap-4'>
         <Button variant='ghost' size='icon' asChild className='h-8 w-8'>
           <Link href='/'>
