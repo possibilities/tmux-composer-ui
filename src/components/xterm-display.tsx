@@ -116,13 +116,27 @@ export function XtermDisplay({
   }, [content, height, width, cursorX, cursorY, isActive])
 
   return (
-    <div
-      className='p-4 bg-black rounded'
-      style={{
-        borderRadius: 'calc(var(--radius) - 2px)',
-      }}
-    >
-      <div ref={terminalRef} />
-    </div>
+    <>
+      <style>{`
+        .xterm-viewport {
+          overflow: hidden !important;
+        }
+        .xterm-viewport::-webkit-scrollbar {
+          display: none;
+        }
+        .xterm-viewport {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+      <div
+        className='p-4 bg-black rounded'
+        style={{
+          borderRadius: 'calc(var(--radius) - 2px)',
+        }}
+      >
+        <div ref={terminalRef} />
+      </div>
+    </>
   )
 }
