@@ -81,8 +81,10 @@ export function XtermDisplay({
       if (contentHasVisibleCursor) {
         terminal.options.theme = {
           ...terminal.options.theme,
-          cursor: 'transparent',
+          cursor: '#000000',
+          cursorAccent: '#000000',
         }
+        terminal.options.cursorInactiveStyle = 'none'
       } else if (cursorX !== undefined && cursorY !== undefined) {
         const col = Math.min(Math.max(cursorX + 1, 1), terminal.cols)
         const row = Math.min(Math.max(cursorY + 1, 1), terminal.rows)
