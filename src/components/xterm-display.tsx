@@ -68,12 +68,20 @@ export function XtermDisplay({
       terminal.loadAddon(webLinksAddon)
 
       terminal.open(terminalRef.current)
-      terminal.write(content)
+
+      // Remove trailing newline if present to prevent extra line
+      const trimmedContent = content.endsWith('\n')
+        ? content.slice(0, -1)
+        : content
+      terminal.write(trimmedContent)
+
+      // Position cursor if coordinates are provided
       if (cursorX !== undefined && cursorY !== undefined) {
         const col = Math.min(Math.max(cursorX + 1, 1), terminal.cols)
         const row = Math.min(Math.max(cursorY + 1, 1), terminal.rows)
         terminal.write(`\x1b[${row};${col}H`)
       }
+
       fitAddon.fit()
 
       terminal.attachCustomWheelEventHandler(() => false)
