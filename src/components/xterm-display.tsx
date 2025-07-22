@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react'
 import { Terminal } from '@xterm/xterm'
-import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import '@xterm/xterm/css/xterm.css'
 
@@ -25,9 +24,13 @@ export function XtermDisplay({
 }: XtermDisplayProps) {
   const terminalRef = useRef<HTMLDivElement>(null)
   const terminalInstanceRef = useRef<Terminal | null>(null)
-  const fitAddonRef = useRef<FitAddon | null>(null)
-  const resizeHandlerRef = useRef<(() => void) | null>(null)
   const initializedRef = useRef(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const fontSize = 14
+  const lineHeight = 1
+  const cols = width || 80
+  const rows = height || 24
 
   useEffect(() => {
     if (!terminalRef.current || initializedRef.current) return
@@ -40,8 +43,8 @@ export function XtermDisplay({
       initializedRef.current = true
 
       const terminal = new Terminal({
-        rows: height || 24,
-        cols: width || 80,
+        rows: rows,
+        cols: cols,
         theme: {
           background: '#000000',
           foreground: '#ffffff',
@@ -51,9 +54,9 @@ export function XtermDisplay({
         cursorStyle: 'block',
         cursorInactiveStyle: 'block',
         fontFamily: "'Fira Code', 'Courier', monospace",
-        fontSize: 14,
+        fontSize: fontSize,
         fontWeight: 'normal',
-        lineHeight: 1,
+        lineHeight: lineHeight,
         convertEol: true,
         disableStdin: true,
         cursorBlink: false,
@@ -61,13 +64,21 @@ export function XtermDisplay({
         rightClickSelectsWord: false,
       })
 
-      const fitAddon = new FitAddon()
       const webLinksAddon = new WebLinksAddon()
 
-      terminal.loadAddon(fitAddon)
       terminal.loadAddon(webLinksAddon)
 
       terminal.open(terminalRef.current)
+
+      setTimeout(() => {
+        if (containerRef.current && terminalRef.current) {
+          const xtermScreen = terminalRef.current.querySelector('.xterm-screen')
+          if (xtermScreen) {
+            const screenWidth = xtermScreen.clientWidth
+            containerRef.current.style.width = `${screenWidth + 32}px`
+          }
+        }
+      }, 50)
 
       const trimmedContent = content.endsWith('\n')
         ? content.slice(0, -1)
@@ -97,8 +108,6 @@ export function XtermDisplay({
         terminal.write(`\x1b[${row};${col}H`)
       }
 
-      fitAddon.fit()
-
       terminal.attachCustomWheelEventHandler(() => false)
 
       terminal.attachCustomKeyEventHandler(event => {
@@ -117,28 +126,16 @@ export function XtermDisplay({
       }
 
       terminalInstanceRef.current = terminal
-      fitAddonRef.current = fitAddon
-
-      const handleWindowResize = () => {
-        fitAddon.fit()
-      }
-      resizeHandlerRef.current = handleWindowResize
-      window.addEventListener('resize', handleWindowResize)
     }
 
     initializeTerminal()
 
     return () => {
-      if (resizeHandlerRef.current) {
-        window.removeEventListener('resize', resizeHandlerRef.current)
-      }
       terminalInstanceRef.current?.dispose()
       terminalInstanceRef.current = null
-      fitAddonRef.current = null
-      resizeHandlerRef.current = null
       initializedRef.current = false
     }
-  }, [content, height, width, cursorX, cursorY, isActive])
+  }, [content, rows, cols, cursorX, cursorY, isActive])
 
   return (
     <>
@@ -155,9 +152,11 @@ export function XtermDisplay({
         }
       `}</style>
       <div
+        ref={containerRef}
         className='p-4 bg-black rounded'
         style={{
           borderRadius: 'calc(var(--radius) - 2px)',
+          width: 'fit-content',
         }}
       >
         <div ref={terminalRef} />
