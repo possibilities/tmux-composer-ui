@@ -40,6 +40,7 @@ export function SessionPaneViews({ pane, windowName }: SessionPaneViewsProps) {
           height={pane.height}
           cursorX={pane.cursorX}
           cursorY={pane.cursorY}
+          isActive={pane.active}
         />
       </CardContent>
     </Card>

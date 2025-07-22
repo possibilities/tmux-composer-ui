@@ -12,6 +12,7 @@ interface XtermDisplayProps {
   height?: number
   cursorX?: number
   cursorY?: number
+  isActive?: boolean
 }
 
 export function XtermDisplay({
@@ -20,6 +21,7 @@ export function XtermDisplay({
   height,
   cursorX,
   cursorY,
+  isActive,
 }: XtermDisplayProps) {
   const terminalRef = useRef<HTMLDivElement>(null)
   const terminalInstanceRef = useRef<Terminal | null>(null)
@@ -44,7 +46,7 @@ export function XtermDisplay({
           background: '#000000',
           foreground: '#ffffff',
           cursor: '#ffffff',
-          cursorAccent: '#000000',
+          cursorAccent: '#ffffff',
         },
         cursorStyle: 'block',
         cursorInactiveStyle: 'block',
@@ -76,6 +78,11 @@ export function XtermDisplay({
 
       terminal.attachCustomWheelEventHandler(() => false)
 
+      // Focus the terminal if it's marked as active
+      if (isActive) {
+        terminal.focus()
+      }
+
       terminalInstanceRef.current = terminal
       fitAddonRef.current = fitAddon
 
@@ -98,7 +105,7 @@ export function XtermDisplay({
       resizeHandlerRef.current = null
       initializedRef.current = false
     }
-  }, [content, height, width, cursorX, cursorY])
+  }, [content, height, width, cursorX, cursorY, isActive])
 
   return (
     <div
