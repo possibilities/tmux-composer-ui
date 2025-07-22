@@ -69,14 +69,21 @@ export function XtermDisplay({
 
       terminal.open(terminalRef.current)
 
-      // Remove trailing newline if present to prevent extra line
       const trimmedContent = content.endsWith('\n')
         ? content.slice(0, -1)
         : content
       terminal.write(trimmedContent)
 
-      // Position cursor if coordinates are provided
-      if (cursorX !== undefined && cursorY !== undefined) {
+      const contentHasVisibleCursor = /\x1b\[\d+;\d+H|\x1b\[7m/.test(
+        trimmedContent,
+      )
+
+      if (contentHasVisibleCursor) {
+        terminal.options.theme = {
+          ...terminal.options.theme,
+          cursor: 'transparent',
+        }
+      } else if (cursorX !== undefined && cursorY !== undefined) {
         const col = Math.min(Math.max(cursorX + 1, 1), terminal.cols)
         const row = Math.min(Math.max(cursorY + 1, 1), terminal.rows)
         terminal.write(`\x1b[${row};${col}H`)
@@ -86,9 +93,10 @@ export function XtermDisplay({
 
       terminal.attachCustomWheelEventHandler(() => false)
 
-      // Focus the terminal if it's marked as active
-      if (isActive) {
+      if (isActive && !contentHasVisibleCursor) {
         terminal.focus()
+      } else {
+        terminal.blur()
       }
 
       terminalInstanceRef.current = terminal
