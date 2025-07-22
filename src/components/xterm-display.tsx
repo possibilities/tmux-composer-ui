@@ -12,6 +12,7 @@ interface XtermDisplayProps {
   cursorX?: number
   cursorY?: number
   isActive?: boolean
+  noPadding?: boolean
 }
 
 export function XtermDisplay({
@@ -21,6 +22,7 @@ export function XtermDisplay({
   cursorX,
   cursorY,
   isActive,
+  noPadding = false,
 }: XtermDisplayProps) {
   const terminalRef = useRef<HTMLDivElement>(null)
   const terminalInstanceRef = useRef<Terminal | null>(null)
@@ -135,7 +137,7 @@ export function XtermDisplay({
       terminalInstanceRef.current = null
       initializedRef.current = false
     }
-  }, [content, rows, cols, cursorX, cursorY, isActive])
+  }, [content, rows, cols, cursorX, cursorY, isActive, noPadding])
 
   return (
     <>
@@ -153,10 +155,11 @@ export function XtermDisplay({
       `}</style>
       <div
         ref={containerRef}
-        className='p-4 bg-black rounded'
+        className={noPadding ? 'bg-black' : 'p-4 bg-black rounded'}
         style={{
-          borderRadius: 'calc(var(--radius) - 2px)',
-          width: 'fit-content',
+          borderRadius: noPadding ? '0' : 'calc(var(--radius) - 2px)',
+          width: noPadding ? '100%' : 'fit-content',
+          height: noPadding ? '100%' : 'auto',
         }}
       >
         <div ref={terminalRef} />

@@ -12,27 +12,9 @@ import {
 import { getProjectDetails, getSessionDetails } from '@/app/actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getFullProjectPath } from '@/lib/utils'
-import { SessionPaneViews } from '@/components/session-pane-views'
+import { SessionWindowTiled } from '@/components/session-window-tiled'
 import { ScrollToTop } from '@/components/scroll-to-top'
-
-type SessionPane = {
-  index: string
-  width: number
-  height: number
-  currentCommand: string
-  currentPath: string
-  content: string
-  cursorX: number
-  cursorY: number
-  active: boolean
-}
-
-type SessionWindow = {
-  index: number
-  name: string
-  active: boolean
-  panes: SessionPane[]
-}
+import type { SessionWindow } from '@/lib/types'
 
 export default async function SessionDetailPage({
   params,
@@ -83,18 +65,16 @@ export default async function SessionDetailPage({
           <div className='space-y-4'>
             <Card>
               <CardHeader>
-                <CardTitle>Session Panes</CardTitle>
+                <CardTitle>Session Windows</CardTitle>
               </CardHeader>
             </Card>
-            {sessionDetails.data.session.windows.flatMap(
-              (window: SessionWindow) =>
-                window.panes.map((pane: SessionPane) => (
-                  <SessionPaneViews
-                    key={`${decodedSession}-${window.name}-${pane.index}`}
-                    pane={pane}
-                    windowName={window.name}
-                  />
-                )),
+            {sessionDetails.data.session.windows.map(
+              (window: SessionWindow) => (
+                <SessionWindowTiled
+                  key={`${decodedSession}-${window.index}`}
+                  window={window}
+                />
+              ),
             )}
           </div>
         )}
