@@ -101,6 +101,13 @@ export function XtermDisplay({
 
       terminal.attachCustomWheelEventHandler(() => false)
 
+      terminal.attachCustomKeyEventHandler(event => {
+        if (event.ctrlKey || event.metaKey) {
+          return false
+        }
+        return true
+      })
+
       if (isActive && !contentHasVisibleCursor) {
         terminal.focus()
       } else {
