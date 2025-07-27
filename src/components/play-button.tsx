@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Play, ChevronDown } from 'lucide-react'
-import { startSession, startSessionWithDirtyWorktree } from '@/app/actions'
+import { startSession, startSessionWithDirtyRepo } from '@/app/actions'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,13 +21,19 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-export function PlayButton({ projectPath }: { projectPath: string }) {
+export function PlayButton({
+  projectPath,
+  defaultWorktree = true,
+}: {
+  projectPath: string
+  defaultWorktree?: boolean
+}) {
   const [showErrorDialog, setShowErrorDialog] = useState(false)
   const [showDirtyRepoDialog, setShowDirtyRepoDialog] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  const handleStartSession = async () => {
-    const result = await startSession(projectPath)
+  const handleStartSession = async (useWorktree: boolean) => {
+    const result = await startSession(projectPath, useWorktree)
     if (!result.success) {
       if (result.errorCode === 'DIRTY_REPOSITORY') {
         setShowDirtyRepoDialog(true)
@@ -38,8 +44,10 @@ export function PlayButton({ projectPath }: { projectPath: string }) {
     }
   }
 
+  const handlePrimaryAction = () => handleStartSession(defaultWorktree)
+
   const handleForceStart = async () => {
-    const result = await startSessionWithDirtyWorktree(projectPath)
+    const result = await startSessionWithDirtyRepo(projectPath, defaultWorktree)
     setShowDirtyRepoDialog(false)
 
     if (!result.success) {
@@ -55,7 +63,7 @@ export function PlayButton({ projectPath }: { projectPath: string }) {
           size='icon'
           variant='outline'
           className='rounded-r-none'
-          onClick={handleStartSession}
+          onClick={handlePrimaryAction}
         >
           <Play className='size-4' />
         </Button>
@@ -70,8 +78,27 @@ export function PlayButton({ projectPath }: { projectPath: string }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
-            <DropdownMenuItem onClick={handleStartSession}>
-              Start session
+            <DropdownMenuItem
+              onClick={() => handleStartSession(true)}
+              className='flex items-center gap-2'
+            >
+              {defaultWorktree ? (
+                <Play className='size-3' />
+              ) : (
+                <div className='size-3' />
+              )}
+              Start in worktree session
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleStartSession(false)}
+              className='flex items-center gap-2'
+            >
+              {!defaultWorktree ? (
+                <Play className='size-3' />
+              ) : (
+                <div className='size-3' />
+              )}
+              Start in main branch session
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

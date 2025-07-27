@@ -43,6 +43,7 @@ export type ProjectInfo = {
     startTime?: string
   }>
   lastActivity?: string
+  worktree?: boolean
 }
 
 export async function getProjects(): Promise<ProjectInfo[]> {
@@ -53,7 +54,14 @@ export async function getProjects(): Promise<ProjectInfo[]> {
 
   type ProjectWithConfig = {
     project: ProjectInfo
-    config: Record<string, unknown>
+    config: {
+      worktree?: {
+        value: boolean
+        source: string
+        sourcePath: string
+      }
+      [key: string]: unknown
+    }
   }
 
   type ProjectsMap = {
@@ -71,7 +79,7 @@ export async function getProjects(): Promise<ProjectInfo[]> {
     const projectsMap: ProjectsMap = JSON.parse(listProjectsResult.stdout)
 
     const projects = Object.values(projectsMap)
-      .map(({ project }) => {
+      .map(({ project, config }) => {
         const mostRecentSessionStartTime = getMostRecentSessionStartTime(
           project.activeSessions,
         )
@@ -92,6 +100,7 @@ export async function getProjects(): Promise<ProjectInfo[]> {
         return {
           ...project,
           lastActivity,
+          worktree: config.worktree?.value as boolean | undefined,
         }
       })
       .filter(
@@ -155,10 +164,10 @@ function extractErrorDetailsFromCommandOutput(
   return { message: commandError.message || 'Unknown error' }
 }
 
-export async function startSession(projectPath: string) {
+export async function startSessionWithWorktree(projectPath: string) {
   try {
     const result = await execAsync(
-      `tmux-composer start-session --tmux-socket ${config.tmuxServer}`,
+      `tmux-composer start-session --tmux-socket ${config.tmuxServer} --worktree`,
       {
         cwd: projectPath,
       },
@@ -193,10 +202,10 @@ export async function startSession(projectPath: string) {
   }
 }
 
-export async function startSessionWithDirtyWorktree(projectPath: string) {
+export async function startSessionInMainBranch(projectPath: string) {
   try {
     const result = await execAsync(
-      `tmux-composer start-session --tmux-socket ${config.tmuxServer} --allow-dirty-non-worktree-session`,
+      `tmux-composer start-session --tmux-socket ${config.tmuxServer} --no-worktree`,
       {
         cwd: projectPath,
       },
@@ -219,7 +228,55 @@ export async function startSessionWithDirtyWorktree(projectPath: string) {
 
     return { success: true, sessionName }
   } catch (error) {
-    console.error('Failed to start session with dirty worktree:', error)
+    console.error('Failed to start session in main branch:', error)
+
+    const errorDetails = extractErrorDetailsFromCommandOutput(error)
+
+    return {
+      success: false,
+      error: errorDetails.message,
+      errorCode: errorDetails.errorCode,
+    }
+  }
+}
+
+export async function startSession(projectPath: string, useWorktree = true) {
+  return useWorktree
+    ? startSessionWithWorktree(projectPath)
+    : startSessionInMainBranch(projectPath)
+}
+
+export async function startSessionWithDirtyRepo(
+  projectPath: string,
+  useWorktree = true,
+) {
+  try {
+    const worktreeFlag = useWorktree ? '--worktree' : '--no-worktree'
+    const result = await execAsync(
+      `tmux-composer start-session --tmux-socket ${config.tmuxServer} ${worktreeFlag} --allow-dirty-non-worktree-session`,
+      {
+        cwd: projectPath,
+      },
+    )
+
+    const lines = result.stdout.trim().split('\n')
+    let sessionName: string | undefined
+
+    for (const line of lines) {
+      try {
+        const data = JSON.parse(line)
+        if (data.payload?.context?.session?.name) {
+          sessionName = data.payload.context.session.name
+          break
+        }
+      } catch {
+        continue
+      }
+    }
+
+    return { success: true, sessionName }
+  } catch (error) {
+    console.error('Failed to start session with dirty repo:', error)
 
     const errorDetails = extractErrorDetailsFromCommandOutput(error)
 

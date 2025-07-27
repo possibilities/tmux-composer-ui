@@ -149,7 +149,10 @@ export function ProjectCard({ project }: { project: ProjectInfo }) {
               sessions={localProject.activeSessions}
               newestSessionName={newestSession?.name}
             />
-            <PlayButton projectPath={localProject.path} />
+            <PlayButton
+              projectPath={localProject.path}
+              defaultWorktree={localProject.worktree ?? true}
+            />
           </div>
         </CardAction>
       </CardHeader>
