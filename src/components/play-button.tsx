@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Play, ChevronDown } from 'lucide-react'
-import { startSession } from '@/app/actions'
+import { startSession, startSessionWithDirtyWorktree } from '@/app/actions'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ import {
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -22,10 +23,25 @@ import {
 
 export function PlayButton({ projectPath }: { projectPath: string }) {
   const [showErrorDialog, setShowErrorDialog] = useState(false)
+  const [showDirtyRepoDialog, setShowDirtyRepoDialog] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
   const handleStartSession = async () => {
     const result = await startSession(projectPath)
+    if (!result.success) {
+      if (result.errorCode === 'DIRTY_REPOSITORY') {
+        setShowDirtyRepoDialog(true)
+      } else {
+        setErrorMessage(result.error || 'Failed to start session')
+        setShowErrorDialog(true)
+      }
+    }
+  }
+
+  const handleForceStart = async () => {
+    const result = await startSessionWithDirtyWorktree(projectPath)
+    setShowDirtyRepoDialog(false)
+
     if (!result.success) {
       setErrorMessage(result.error || 'Failed to start session')
       setShowErrorDialog(true)
@@ -69,6 +85,26 @@ export function PlayButton({ projectPath }: { projectPath: string }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showDirtyRepoDialog}
+        onOpenChange={setShowDirtyRepoDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Uncommitted Changes Detected</AlertDialogTitle>
+            <AlertDialogDescription>
+              Do you want to start the session anyway?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleForceStart}>
+              Start Anyway
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

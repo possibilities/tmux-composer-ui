@@ -116,15 +116,23 @@ export async function getProjects(): Promise<ProjectInfo[]> {
   }
 }
 
-function extractErrorMessageFromCommandOutput(commandError: unknown): string {
+type CommandErrorDetails = {
+  message: string
+  errorCode?: string
+}
+
+function extractErrorDetailsFromCommandOutput(
+  commandError: unknown,
+): CommandErrorDetails {
   if (
     !(commandError instanceof Error) ||
     !('stdout' in commandError) ||
     typeof commandError.stdout !== 'string'
   ) {
-    return commandError instanceof Error
-      ? commandError.message
-      : 'Unknown error'
+    return {
+      message:
+        commandError instanceof Error ? commandError.message : 'Unknown error',
+    }
   }
 
   const outputLines = commandError.stdout.trim().split('\n')
@@ -134,16 +142,17 @@ function extractErrorMessageFromCommandOutput(commandError: unknown): string {
       const parsedLine = JSON.parse(line)
       const hasFailureEvent = parsedLine.event?.includes(':fail')
       const errorDetails = parsedLine.payload?.details?.error
+      const errorCode = parsedLine.payload?.details?.errorCode
 
       if (hasFailureEvent && errorDetails) {
-        return errorDetails
+        return { message: errorDetails, errorCode }
       }
     } catch {
       continue
     }
   }
 
-  return commandError.message || 'Unknown error'
+  return { message: commandError.message || 'Unknown error' }
 }
 
 export async function startSession(projectPath: string) {
@@ -174,11 +183,50 @@ export async function startSession(projectPath: string) {
   } catch (error) {
     console.error('Failed to start session:', error)
 
-    const errorMessage = extractErrorMessageFromCommandOutput(error)
+    const errorDetails = extractErrorDetailsFromCommandOutput(error)
 
     return {
       success: false,
-      error: errorMessage,
+      error: errorDetails.message,
+      errorCode: errorDetails.errorCode,
+    }
+  }
+}
+
+export async function startSessionWithDirtyWorktree(projectPath: string) {
+  try {
+    const result = await execAsync(
+      `tmux-composer start-session --tmux-socket ${config.tmuxServer} --allow-dirty-non-worktree-session`,
+      {
+        cwd: projectPath,
+      },
+    )
+
+    const lines = result.stdout.trim().split('\n')
+    let sessionName: string | undefined
+
+    for (const line of lines) {
+      try {
+        const data = JSON.parse(line)
+        if (data.payload?.context?.session?.name) {
+          sessionName = data.payload.context.session.name
+          break
+        }
+      } catch {
+        continue
+      }
+    }
+
+    return { success: true, sessionName }
+  } catch (error) {
+    console.error('Failed to start session with dirty worktree:', error)
+
+    const errorDetails = extractErrorDetailsFromCommandOutput(error)
+
+    return {
+      success: false,
+      error: errorDetails.message,
+      errorCode: errorDetails.errorCode,
     }
   }
 }
