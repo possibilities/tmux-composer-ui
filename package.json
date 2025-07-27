@@ -13,6 +13,7 @@
     "format": "prettier --write \"*.{js,mjs,ts,json,md,mdx,yml,yaml}\" \"src/**/*.{js,mjs,jsx,ts,tsx,json,md,mdx,css,yml,yaml}\""
   },
   "dependencies": {
+    "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-dropdown-menu": "^2.1.15",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",

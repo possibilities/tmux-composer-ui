@@ -116,6 +116,36 @@ export async function getProjects(): Promise<ProjectInfo[]> {
   }
 }
 
+function extractErrorMessageFromCommandOutput(commandError: unknown): string {
+  if (
+    !(commandError instanceof Error) ||
+    !('stdout' in commandError) ||
+    typeof commandError.stdout !== 'string'
+  ) {
+    return commandError instanceof Error
+      ? commandError.message
+      : 'Unknown error'
+  }
+
+  const outputLines = commandError.stdout.trim().split('\n')
+
+  for (const line of outputLines) {
+    try {
+      const parsedLine = JSON.parse(line)
+      const hasFailureEvent = parsedLine.event?.includes(':fail')
+      const errorDetails = parsedLine.payload?.details?.error
+
+      if (hasFailureEvent && errorDetails) {
+        return errorDetails
+      }
+    } catch {
+      continue
+    }
+  }
+
+  return commandError.message || 'Unknown error'
+}
+
 export async function startSession(projectPath: string) {
   try {
     const result = await execAsync(
@@ -125,29 +155,30 @@ export async function startSession(projectPath: string) {
       },
     )
 
-    // Parse newline-delimited JSON output
     const lines = result.stdout.trim().split('\n')
     let sessionName: string | undefined
 
     for (const line of lines) {
       try {
         const data = JSON.parse(line)
-        // Look for session name in context
         if (data.payload?.context?.session?.name) {
           sessionName = data.payload.context.session.name
           break
         }
       } catch {
-        // Skip lines that aren't valid JSON
+        continue
       }
     }
 
     return { success: true, sessionName }
   } catch (error) {
     console.error('Failed to start session:', error)
+
+    const errorMessage = extractErrorMessageFromCommandOutput(error)
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
     }
   }
 }
