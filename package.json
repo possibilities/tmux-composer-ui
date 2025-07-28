@@ -10,8 +10,7 @@
     "typecheck:watch": "tsc --noEmit --watch",
     "lint": "next lint",
     "lint:watch": "nodemon --watch src --ext js,mjs,jsx,ts,tsx,json,md,mdx,css,yml,yaml --exec \"next lint\"",
-    "format": "prettier --write \"*.{js,mjs,ts,json,md,mdx,yml,yaml}\" \"src/**/*.{js,mjs,jsx,ts,tsx,json,md,mdx,css,yml,yaml}\"",
-    "browser:watch": "browser-composer start-browser  $(basename \"$(pwd)\")"
+    "format": "prettier --write \"*.{js,mjs,ts,json,md,mdx,yml,yaml}\" \"src/**/*.{js,mjs,jsx,ts,tsx,json,md,mdx,css,yml,yaml}\""
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.14",
