@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Play, ChevronDown } from 'lucide-react'
+import { Play, ChevronDown, GitBranch } from 'lucide-react'
 import { startSession, startSessionWithDirtyRepo } from '@/app/actions'
 import {
   DropdownMenu,
@@ -21,13 +21,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-export function PlayButton({
-  projectPath,
-  defaultWorktree = true,
-}: {
-  projectPath: string
-  defaultWorktree?: boolean
-}) {
+export function PlayButton({ projectPath }: { projectPath: string }) {
   const [showErrorDialog, setShowErrorDialog] = useState(false)
   const [showDirtyRepoDialog, setShowDirtyRepoDialog] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -44,10 +38,10 @@ export function PlayButton({
     }
   }
 
-  const handlePrimaryAction = () => handleStartSession(defaultWorktree)
+  const handlePrimaryAction = () => handleStartSession(false)
 
   const handleForceStart = async () => {
-    const result = await startSessionWithDirtyRepo(projectPath, defaultWorktree)
+    const result = await startSessionWithDirtyRepo(projectPath, false)
     setShowDirtyRepoDialog(false)
 
     if (!result.success) {
@@ -79,26 +73,18 @@ export function PlayButton({
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
             <DropdownMenuItem
-              onClick={() => handleStartSession(true)}
-              className='flex items-center gap-2'
-            >
-              {defaultWorktree ? (
-                <Play className='size-3' />
-              ) : (
-                <div className='size-3' />
-              )}
-              Start in worktree session
-            </DropdownMenuItem>
-            <DropdownMenuItem
               onClick={() => handleStartSession(false)}
               className='flex items-center gap-2'
             >
-              {!defaultWorktree ? (
-                <Play className='size-3' />
-              ) : (
-                <div className='size-3' />
-              )}
-              Start in main branch session
+              <Play className='size-3' />
+              Start session
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleStartSession(true)}
+              className='flex items-center gap-2'
+            >
+              <GitBranch className='size-3' />
+              Start worktree session
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
