@@ -111,13 +111,23 @@ export async function getProjects(): Promise<ProjectInfo[]> {
       )
 
     return projects.sort((a, b) => {
-      const aTime = a.lastActivity
-      const bTime = b.lastActivity
+      const aIsActive = Boolean(a.activeSessions?.length)
+      const bIsActive = Boolean(b.activeSessions?.length)
 
-      if (!aTime && !bTime) return a.name.localeCompare(b.name)
-      if (!aTime) return 1
-      if (!bTime) return -1
-      return new Date(bTime).getTime() - new Date(aTime).getTime()
+      if (aIsActive !== bIsActive) {
+        return aIsActive ? -1 : 1
+      }
+
+      if (!a.lastActivity && !b.lastActivity) {
+        return a.name.localeCompare(b.name)
+      }
+
+      if (!a.lastActivity) return 1
+      if (!b.lastActivity) return -1
+
+      return (
+        new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime()
+      )
     })
   } catch (error) {
     console.error(`Failed to list projects in ${projectsPath}:`, error)
