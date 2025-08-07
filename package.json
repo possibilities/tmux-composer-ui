@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "browser:watch": "npx browser-composer start-browser --attach $(basename \"$(pwd)\")",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
